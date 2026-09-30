@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+const base=process.env.TEST_BASE_URL||'http://localhost:5173';
+let r=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});const cookie=r.headers.getSetCookie().map(v=>v.split(';')[0]).join('; ');assert.ok(cookie,'Local sign-in must set test cookie');
+let version,data;
+async function api(body,token){const res=await fetch(base+'/api/workspace',{method:body?'POST':'GET',headers:{...(token?{Authorization:`Bearer ${token}`}:{cookie}),'Content-Type':'application/json'},...(body?{body:JSON.stringify({...body,version})}:{})});const j=await res.json();if(j.version){version=j.version;data=j.data;}return {res,j};}
+assert.equal((await fetch(base+'/api/workspace')).status,401);
+assert.equal((await api()).res.status,200);assert.equal(data.complaints.length>=12,true);
+const png=Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jh2sAAAAASUVORK5CYII=','base64'));
+const form=new FormData();form.append('file',new Blob([png],{type:'image/png'}),'test-evidence.png');r=await fetch(base+'/api/media',{method:'POST',headers:{cookie},body:form});assert.equal(r.status,200);const media=(await r.json()).id;
+let result=await api({action:'create',view:'resident',category:'Road & Footpath',title:'QA: sample pathway issue',description:'Automated test complaint using a synthetic 1-pixel evidence image.',locality:'Demo locality',lat:26.91,lng:75.78,media:[media],consent:true});assert.equal(result.res.status,200,JSON.stringify(result.j));const id=result.j.id;
+assert.equal((await api({action:'transition',id,status:'Acknowledged',note:'Acknowledged by automated test.'})).res.status,200);
+assert.equal((await api({action:'edit',id,assignee:'Roads & Infrastructure'})).res.status,200);
+assert.equal((await api({action:'transition',id,status:'Assigned',note:'Assigned for test work.'})).res.status,200);
+assert.equal((await api({action:'transition',id,status:'In Progress',note:'Test work commenced.'})).res.status,200);
+assert.equal((await api({action:'transition',id,status:'Resolution Proposed',note:'Resolution without evidence must fail.'})).res.status,400);
+assert.equal((await api({action:'edit',id,afterMedia:[media]})).res.status,200);
+assert.equal((await api({action:'transition',id,status:'Resolution Proposed',note:'Test repair completed with evidence.'})).res.status,200);
+const token=(await api({action:'pair-mobile'})).j.token;assert.ok(token);
+assert.equal((await api({action:'edit',id,priority:'High'},token)).res.status,403);
+const code=(await api({action:'issue-closure-code',id},token)).j.demoCode;assert.match(code,/^\d{6}$/);
+assert.equal((await api({action:'verify-closure',id,code:'wrong'},token)).res.status,400);
+assert.equal((await api({action:'verify-closure',id,code},token)).res.status,200);assert.equal(data.complaints.find(c=>c.id===id).status,'Closed');
+assert.equal((await api({action:'verify-closure',id,code},token)).res.status,403);
+assert.equal((await api({action:'dispute',id,note:'Reopened by the automated resident test.'},token)).res.status,200);
+await api();assert.equal(data.complaints.find(c=>c.id===id).status,'Reopened');assert.ok(!('challenges' in data));
+const stale=await fetch(base+'/api/workspace',{method:'POST',headers:{cookie,'Content-Type':'application/json'},body:JSON.stringify({action:'edit',id,priority:'Low',version:0})});assert.equal(stale.status,409);
+console.log('PASS: unauthenticated rejection, media upload, create → acknowledge → assign → progress → evidence → propose → wrong OTP → verify → replay denied → reopen; native resident authorization and stale-write conflict.');

@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+let app=fs.readFileSync('mobile/src/App.tsx','utf8');
+app=app.replace('KeyboardAvoidingView}', 'KeyboardAvoidingView,Linking}');
+app=app.replace("import * as ImagePicker from 'expo-image-picker';\n",'').replace("import * as Location from 'expo-location';\n",'');
+app=app.replace("const [category,setCategory]=useState(categories[0]);const [title,setTitle]=useState('');const [description,setDescription]=useState('');const [address,setAddress]=useState('');const [lat,setLat]=useState('');const [lng,setLng]=useState('');const [photos,setPhotos]=useState<string[]>([]);const [consent,setConsent]=useState(false);",'');
+const from=app.indexOf(' async function choosePhoto');const to=app.indexOf(' const c=data?',from);if(from>=0&&to>=0)app=app.slice(0,from)+app.slice(to);
+app=app.replace("async function act(body:Record<string,unknown>){const r=await request(connection!,{...body,version,view:'resident'});setData(r.data);setVersion(r.version);return r;}","async function act(body:Record<string,unknown>){try{const r=await request(connection!,{...body,version,view:'resident'});setData(r.data);setVersion(r.version);return r;}catch(e){await load(connection!);throw e;}}");
+app=app.replace("{!data?<><Image", "{!data&&Platform.OS==='web'?<><Text style={s.h1}>Open your private preview</Text><Text style={s.p}>Sign in to load the sample ward and saved test complaints. The phone verification screens are a separate UI simulation.</Text><Button title=\"Open test workspace\" onPress={()=>void Linking.openURL('/signin-with-chatgpt?return_to=/mobile-app/index.html')}/></>:!data?<><Image");
+app=app.replace("import {categories,type Workspace,type Complaint}","import {type Workspace,type Complaint}").replace("request,upload,type Connection","request,type Connection");
+fs.writeFileSync('mobile/src/App.tsx',app);

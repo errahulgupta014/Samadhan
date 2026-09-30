@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+const base=process.env.TEST_BASE_URL||'http://localhost:5173';
+const login=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});
+const cookie=login.headers.getSetCookie().map(v=>v.split(';')[0]).join('; ');
+let version,data;
+async function api(body,token){const r=await fetch(base+'/api/workspace',{method:body?'POST':'GET',headers:{...(token?{Authorization:`Bearer ${token}`}:{cookie}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify({...body,version})}:{})});const j=await r.json();if(j.version){version=j.version;data=j.data;}return {r,j};}
+await api();const originalProfile={...data.profile};await api({action:'save-profile',view:'resident',profile:{name:'QA Resident',email:'',address:'',language:'en',classifiedNotifications:true}});
+const token=(await api({action:'pair-mobile'})).j.token;
+await api(undefined,token);assert.equal(data.viewer.role,'Resident');assert.equal(data.audit.length,0);assert.equal('residentProfiles' in data,false);
+for(const action of ['save-classified','save-municipality','save-place','save-category','save-admin'])assert.equal((await api({action},token)).r.status,403,action);
+const nonce=Date.now();const category={nameEn:`QA Category ${nonce}`,nameHi:`टेस्ट ${nonce}`,icon:'leaf-outline',color:'#147754',sortOrder:50,enabled:true};
+const categoryId=(await api({action:'save-category',category})).j.categoryId;assert.ok(categoryId);
+const cats=await fetch(base+'/api/categories',{headers:{Authorization:`Bearer ${token}`}});assert.equal(cats.status,200);assert.ok((await cats.json()).categories.some(c=>c.id===categoryId));
+const ad={title:`QA advertisement ${nonce}`,titleHi:'परीक्षण विज्ञापन',description:'Synthetic advertisement to verify admin publishing and resident inbox delivery.',descriptionHi:'',advertiser:'Local test only',contactPhone:'',url:'',imageId:'',startsAt:new Date(Date.now()-1000).toISOString(),endsAt:new Date(Date.now()+86400000).toISOString()};
+const saved=await api({action:'save-classified',classified:ad});assert.equal(saved.r.status,200);const id=saved.j.id;
+await api(undefined,token);assert.ok(!data.classifieds.some(a=>a.id===id));
+const published=await api({action:'publish-classified',id,status:'published'});assert.equal(published.r.status,200);assert.equal(published.j.notificationCreated,true);
+await api(undefined,token);assert.ok(data.classifieds.some(a=>a.id===id));const n=data.notifications.find(n=>n.classifiedId===id);assert.ok(n);assert.equal(n.read,false);
+assert.equal((await api({action:'read-notification',id:n.id},token)).r.status,200);await api(undefined,token);assert.equal(data.notifications.find(x=>x.id===n.id).read,true);
+const repeated=await api({action:'publish-classified',id,status:'published'});assert.equal(repeated.j.notificationCreated,false);
+const grant=await api({action:'save-admin',admin:{email:`qa-${nonce}@example.invalid`,role:'Auditor',permissions:[],active:false}});assert.equal(grant.r.status,200);assert.ok(grant.j.admins.some(a=>a.email===`qa-${nonce}@example.invalid`&&!a.active));
+const adminList=await fetch(base+'/api/workspace?section=admins',{headers:{Authorization:`Bearer ${token}`}});assert.equal(adminList.status,403);
+assert.equal((await api({action:'save-admin',admin:{email:'invalid',role:'Super Admin',active:true}})).r.status,400);
+await api({action:'publish-classified',id,status:'archived'});await api({action:'save-category',category:{...category,id:categoryId,enabled:false}});
+await api({action:'save-profile',view:'resident',profile:originalProfile});
+const logout=await fetch(base+'/api/logout',{method:'POST',headers:{Authorization:`Bearer ${token}`}});assert.equal(logout.status,200);assert.equal((await api(undefined,token)).r.status,401);
+console.log('PASS: server-driven categories, durable profile, resident permissions, draft visibility, ad publish → notification → read, duplicate suppression, admin grant validation, access-list privacy, logout token revocation. Synthetic ads/categories archived; QA admin remains disabled.');

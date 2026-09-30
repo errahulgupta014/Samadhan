@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+let app=fs.readFileSync('mobile/src/App.tsx','utf8').replace("import {Ionicons} from '@expo/vector-icons';","import Ionicons from '@expo/vector-icons/Ionicons';\nimport ReportFlow from './ReportFlow';");
+const start=app.indexOf(" {page==='report'&&");const end=app.indexOf(" {page==='detail'&&",start);
+if(start<0||end<0)throw new Error('Report section missing');
+app=app.slice(0,start)+` {page==='report'&&<ReportFlow connection={connection!} hindi={hindi} act={act} onSuccess={id=>{setSelected(id);setPage('detail');}}/>}\n`+app.slice(end);
+app=app.replace("{t('Namaste, neighbour.','नमस्कार!')}","{hindi?'नमस्कार!':`Namaste, ${residentName==='Demo Resident'?'neighbour':residentName.split(' ')[0]}.`}");
+app=app.replace("const [page,setPage]=useState('home');","const [page,setPage]=useState('home');const [filter,setFilter]=useState('All');");
+app=app.replace("{data.complaints.map(c=><ComplaintCard",`<View style={s.chips}>{['All','Open','To confirm','Closed'].map(f=><Pressable key={f} accessibilityRole="button" style={[s.chip,filter===f&&s.chipSelected]} onPress={()=>setFilter(f)}><Text style={{fontSize:12,color:filter===f?'white':'#527581'}}>{f}</Text></Pressable>)}</View>{data.complaints.filter(c=>filter==='All'||(filter==='Closed'?c.status==='Closed':filter==='To confirm'?c.status==='Resolution Proposed':!['Closed','Resolution Proposed','Rejected / Duplicate'].includes(c.status))).map(c=><ComplaintCard`);
+fs.writeFileSync('mobile/src/App.tsx',app);
+const on='mobile/src/Onboarding.tsx';fs.writeFileSync(on,fs.readFileSync(on,'utf8').replace("import {Ionicons} from '@expo/vector-icons';","import Ionicons from '@expo/vector-icons/Ionicons';"));

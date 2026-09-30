@@ -1,0 +1,8 @@
+import {Platform} from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+export type Connection={url:string;token:string};
+export async function readConnection():Promise<Connection|null>{if(Platform.OS==='web')return {url:window.location.origin,token:''};const value=await SecureStore.getItemAsync('samadhan.connection');return value?JSON.parse(value):null;}
+export async function saveConnection(c:Connection){if(Platform.OS==='web')return;await SecureStore.setItemAsync('samadhan.connection',JSON.stringify(c));}
+export async function forgetConnection(){if(Platform.OS==='web')return;await SecureStore.deleteItemAsync('samadhan.connection');}
+export async function request(c:Connection,body?:Record<string,unknown>){const response=await fetch(c.url.replace(/\/$/,'')+'/api/workspace?view=resident',{method:body?'POST':'GET',headers:{...(c.token?{Authorization:`Bearer ${c.token}`}:{}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify(body)}:{})});const result=await response.json();if(!response.ok)throw Object.assign(new Error(result.error||'Unable to connect to your ward.'),{status:response.status});return result;}
+export async function upload(c:Connection,uri:string,mime='image/jpeg'){const form=new FormData();if(Platform.OS==='web'){const blob=await (await fetch(uri)).blob();form.append('file',blob,'report.jpg');}else form.append('file',{uri,type:mime,name:mime==='image/png'?'report.png':'report.jpg'} as any);const response=await fetch(c.url.replace(/\/$/,'')+'/api/media',{method:'POST',headers:{...(c.token?{Authorization:`Bearer ${c.token}`}:{})},body:form});const result=await response.json();if(!response.ok)throw new Error(result.error||'Photo upload failed.');return result.id as string;}

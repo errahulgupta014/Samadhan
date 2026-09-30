@@ -1,0 +1,2 @@
+import {assertOrigin,identity,database,apiError} from '@/lib/server';
+export async function POST(request:Request){try{assertOrigin(request);const who=await identity(request);if(who.tokenHash)await database().prepare('DELETE FROM mobile_tokens WHERE hash = ?').bind(who.tokenHash).run();await database().prepare('DELETE FROM resident_push_tokens WHERE owner = ? AND resident_id = ?').bind(who.owner,who.residentId).run();return Response.json({loggedOut:true,browserSignOut:who.tokenHash?null:'/signout-with-chatgpt?return_to=/mobile-app/'});}catch(e){return apiError(e);}}

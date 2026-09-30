@@ -1,0 +1,8 @@
+export type ResidentProfile={id:string;name:string;mobile:string;email:string;address:string;language:'en'|'hi';classifiedNotifications:boolean;notificationConsentAt:string|null;readNotificationIds:string[];updatedAt:string};
+export type Classified={id:string;title:string;titleHi:string;description:string;descriptionHi:string;advertiser:string;imageId:string;contactPhone:string;url:string;startsAt:string;endsAt:string;status:'draft'|'published'|'archived';publishedAt:string|null};
+export type Place={id:string;name:string;nameHi:string;description:string;descriptionHi:string;address:string;hours:string;imageId:string;sourceUrl:string;mapUrl:string;published:boolean;sortOrder:number};
+export type Municipality={name:string;nameHi:string;district:string;state:string;about:string;aboutHi:string;history:string;historyHi:string;sourceUrl:string;published:boolean};
+export type ResidentNotification={id:string;title:string;titleHi:string;body:string;bodyHi:string;classifiedId:string;createdAt:string;read?:boolean};
+export function defaultProfile(id='demo-resident'):ResidentProfile{return {id,name:'Demo Resident',mobile:'•••••• 2100',email:'',address:'',language:'en',classifiedNotifications:false,notificationConsentAt:null,readNotificationIds:[],updatedAt:new Date().toISOString()};}
+export function defaultMunicipality():Municipality{return {name:'',nameHi:'',district:'',state:'',about:'',aboutHi:'',history:'',historyHi:'',sourceUrl:'',published:false};}
+export function visibleClassified(ad:Classified,now=Date.now()){return ad.status==='published'&&+new Date(ad.startsAt)<=now&&+new Date(ad.endsAt)>now;}

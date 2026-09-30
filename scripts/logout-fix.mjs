@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+const path='mobile/src/App.tsx';let s=fs.readFileSync(path,'utf8');
+s=s.replace('useEffect,useState','useEffect,useState,useRef');
+s=s.replace('function CitizenApp(){','function CitizenApp(){const sessionGeneration=useRef(0);');
+s=s.replace('async function load(c:Connection){const r=await request(c);','async function load(c:Connection){const generation=sessionGeneration.current;const r=await request(c);if(generation!==sessionGeneration.current)return;');
+s=s.replace('await forgetConnection();setData(null);','sessionGeneration.current++;await forgetConnection();setData(null);');
+s=s.replace("router.replace('/');if(Platform.OS==='web')await Linking.openURL('/signout-with-chatgpt?return_to=/mobile-app/index.html');","if(Platform.OS==='web')window.location.assign('/signout-with-chatgpt?return_to=/mobile-app/index.html');else router.replace('/');");
+s=s.replace("onPress={()=>void Linking.openURL('/signin-with-chatgpt?return_to=/mobile-app/index.html')}","onPress={()=>window.location.assign('/signin-with-chatgpt?return_to=/mobile-app/index.html')}");
+s=s.replace('StyleSheet,Linking,AppState','StyleSheet,AppState');
+fs.writeFileSync(path,s);
