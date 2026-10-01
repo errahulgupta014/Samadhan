@@ -1,0 +1,5 @@
+import {Platform} from 'react-native';
+import * as SecureStore from 'expo-secure-store';
+const key='samadhan.splash';
+export async function getBrandingCache(base:string):Promise<string|undefined>{try{const raw=Platform.OS==='web'?localStorage.getItem(key):await SecureStore.getItemAsync(key);const value=raw?JSON.parse(raw):null;return value?.base===base&&typeof value?.imageUrl==='string'?value.imageUrl:undefined;}catch{return undefined;}}
+export async function fetchBranding(base:string){const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),4000);try{const response=await fetch(base+'/api/branding',{signal:controller.signal});if(!response.ok)throw new Error('Branding unavailable');const data=await response.json();const imageUrl=typeof data.imageUrl==='string'&&data.imageUrl.startsWith('/api/branding/image?')?base+data.imageUrl:undefined;const value=JSON.stringify({base,imageUrl});try{if(Platform.OS==='web')localStorage.setItem(key,value);else await SecureStore.setItemAsync(key,value);}catch{}return imageUrl;}finally{clearTimeout(timer);}}

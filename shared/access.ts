@@ -10,5 +10,5 @@ export const rolePresets = {
 } satisfies Record<string,readonly Permission[]>;
 export type AdminRole=keyof typeof rolePresets;
 export type Viewer={role:AdminRole|'Resident';permissions:Permission[];email?:string;isOwner?:boolean};
-export const actionPermissions:Record<string,Permission>={transition:'complaints.manage',edit:'complaints.manage','save-category':'categories.manage',announcement:'announcements.manage',settings:'settings.manage','save-classified':'classifieds.manage','publish-classified':'classifieds.manage','save-municipality':'city.manage','save-place':'city.manage','save-admin':'admins.manage'};
+export const actionPermissions:Record<string,Permission>={'add-demo-content':'settings.manage',transition:'complaints.manage',edit:'complaints.manage','save-category':'categories.manage',announcement:'announcements.manage',settings:'settings.manage','save-branding':'settings.manage','save-classified':'classifieds.manage','publish-classified':'classifieds.manage','save-municipality':'city.manage','save-place':'city.manage','save-admin':'admins.manage'};
 export function can(viewer:Viewer,permission:Permission){return viewer.permissions.includes(permission);}

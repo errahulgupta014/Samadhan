@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import "./product.css";
+import "./tiranga.css";
 
 export const metadata: Metadata = {
   title: "SAMADHAN · Ward Operations",

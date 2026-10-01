@@ -17,7 +17,7 @@ assert.equal((await api({action:'edit',id,afterMedia:[media]})).res.status,200);
 assert.equal((await api({action:'transition',id,status:'Resolution Proposed',note:'Test repair completed with evidence.'})).res.status,200);
 const token=(await api({action:'pair-mobile'})).j.token;assert.ok(token);
 assert.equal((await api({action:'edit',id,priority:'High'},token)).res.status,403);
-const code=(await api({action:'issue-closure-code',id},token)).j.demoCode;assert.match(code,/^\d{6}$/);
+const code=(await api({action:'preview-closure-code',id},token)).j.demoCode;assert.match(code,/^\d{6}$/);
 assert.equal((await api({action:'verify-closure',id,code:'wrong'},token)).res.status,400);
 assert.equal((await api({action:'verify-closure',id,code},token)).res.status,200);assert.equal(data.complaints.find(c=>c.id===id).status,'Closed');
 assert.equal((await api({action:'verify-closure',id,code},token)).res.status,403);

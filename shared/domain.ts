@@ -12,9 +12,9 @@ export function activeCategories(items: IssueCategory[]): IssueCategory[] { retu
 export const teams = ['Roads & Infrastructure', 'Sanitation Team', 'Water & Drainage', 'Electrical Team', 'Parks Department'];
 export type Timeline = { status: Status; note: string; at: string; actor: string };
 export type Complaint = { id: string; title: string; description: string; categoryId?: string; category: string; locality: string; lat: number; lng: number; priority: string; status: Status; assignee: string; resident: string; mobile: string; createdAt: string; dueAt: string; history: Timeline[]; media: string[]; afterMedia: string[]; };
-export type Communication = { id: string; complaintId: string; template: string; channel: string; recipient: string; status: string; at: string; reason: string };
+export type Communication = { id: string; complaintId: string; template: string; channel: string; recipient: string; status: string; at: string; reason: string; message?:string };
 export type Announcement = { id: string; title: string; body: string; priority: string; at: string };
-export type Workspace = { profile?:ResidentProfile; classifiedNotifications?:boolean; classifieds?:Classified[]; places?:Place[]; municipality?:Municipality; notifications?:ResidentNotification[]; viewer?:Viewer; categories: IssueCategory[]; complaints: Complaint[]; communications: Communication[]; announcements: Announcement[]; audit: { id: string; action: string; actor: string; at: string; complaintId: string }[]; settings: { ward: string; city: string; contact: string; slaHours: number }; };
+export type Workspace = { profile?:ResidentProfile; classifiedNotifications?:boolean; classifieds?:Classified[]; places?:Place[]; municipality?:Municipality; notifications?:ResidentNotification[]; viewer?:Viewer; categories: IssueCategory[]; complaints: Complaint[]; communications: Communication[]; announcements: Announcement[]; audit: { id: string; action: string; actor: string; at: string; complaintId: string }[]; settings: { splashImageId?:string; ward: string; city: string; contact: string; slaHours: number }; };
 export const transitions: Record<Status, Status[]> = {
  'Submitted': ['Acknowledged', 'Rejected / Duplicate'], 'Acknowledged': ['Assigned', 'Rejected / Duplicate'],
  'Assigned': ['In Progress', 'On Hold'], 'In Progress': ['On Hold', 'Resolution Proposed'],

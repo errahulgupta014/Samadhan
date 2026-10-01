@@ -1,4 +1,5 @@
 import {defaultProfile,defaultMunicipality,visibleClassified,type ResidentProfile,type Classified,type Place,type Municipality,type ResidentNotification} from '../shared/community';
+import {addDemoCommunity} from './demo-community';
 import type {Viewer} from '../shared/access';
 import type {Workspace} from '../shared/domain';
 export type CommunityState={residentProfiles?:Record<string,ResidentProfile>;classifieds?:Classified[];places?:Place[];municipality?:Municipality;notifications?:ResidentNotification[]};
@@ -13,6 +14,7 @@ function field(v:unknown,min=0,max=2000){if(typeof v!=='string'||v.trim().length
 function url(v:unknown){const value=field(v,0,1000);if(value){const u=new URL(value);if(u.protocol!=='https:')throw new Error('Links must use HTTPS.');}return value;}
 export function applyCommunityAction(state:Workspace&CommunityState,body:any,residentId:string,actor:string,now=Date.now()):Record<string,unknown>|null{
  ensureCommunity(state);const at=new Date(now).toISOString();const log=(action:string,id='')=>state.audit.unshift({id:crypto.randomUUID(),action,actor,at,complaintId:id});
+ if(body.action==='add-demo-content'){const result=addDemoCommunity(state,now);log('Added sample ads and city guide');return result;}
  if(body.action==='save-profile'){
   const p=body.profile;const previous=state.residentProfiles![residentId]??defaultProfile(residentId);const email=field(p.email,0,150);
   if(email&&!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))throw new Error('Enter a valid email address.');
@@ -37,6 +39,7 @@ export function applyCommunityAction(state:Workspace&CommunityState,body:any,res
   if(body.status==='published'&&+new Date(ad.endsAt)<=now)throw new Error('This classified has expired. Update its dates before publishing.');
   const notify=body.status==='published'&&!ad.publishedAt;ad.status=body.status;if(body.status==='published')ad.publishedAt??=at;
   if(notify)state.notifications!.unshift({id:crypto.randomUUID(),classifiedId:ad.id,title:ad.title,titleHi:ad.titleHi,body:`${ad.advertiser}: ${ad.description.slice(0,180)}`,bodyHi:ad.descriptionHi.slice(0,180),createdAt:at});
+  if(notify)for(const profile of Object.values(state.residentProfiles!))if(profile.classifiedNotifications)state.communications.unshift({id:crypto.randomUUID(),complaintId:ad.id,template:'Classified published',channel:'WhatsApp',recipient:profile.mobile,status:'Not sent · WhatsApp setup pending',at,reason:'WhatsApp Business sender and approved templates are not configured.',message:`${ad.title}: ${ad.description.slice(0,180)}. Open SAMADHAN → Ads for details.`});
   log(`Classified ${body.status}`,ad.id);return {notificationCreated:notify,classifiedId:ad.id};
  }
  if(body.action==='save-municipality'){

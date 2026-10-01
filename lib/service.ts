@@ -1,5 +1,6 @@
 import { defaultIssueCategories, categoryIcons, teams, validateTransition, type Workspace, type Complaint, type Status, type IssueCategory } from '../shared/domain';
-export type StoredWorkspace = Workspace & { challenges?: Record<string,{hash:string;expires:number;attempts:number;lastSent:number}> };
+// demoCode is private test-only state. Never include challenges in workspace projections.
+export type StoredWorkspace = Workspace & { challenges?: Record<string,{hash:string;expires:number;attempts:number;lastSent:number;demoCode?:string}> };
 export class ServiceError extends Error { constructor(message:string,public code=400){super(message);} }
 export async function digest(value:string){ const bytes=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(value));return Array.from(new Uint8Array(bytes),n=>n.toString(16).padStart(2,'0')).join(''); }
 export function normalizeWorkspace(s:StoredWorkspace):StoredWorkspace {
@@ -13,12 +14,13 @@ function text(v:unknown,min=1,max=2000){if(typeof v!=='string'||v.trim().length<
 export async function applyAction(s:StoredWorkspace,body:any,role:'admin'|'resident',now=Date.now(),actorOverride?:string):Promise<Record<string,unknown>> {
  normalizeWorkspace(s);
  const at=new Date(now).toISOString();const action=body.action;const actor=actorOverride??(role==='admin'?'Ward Admin (test)':'Demo Resident');
- const adminActions=['transition','edit','announcement','settings','save-category'];
+ const adminActions=['transition','edit','announcement','settings','save-category','save-branding'];
  if(adminActions.includes(action)&&role!=='admin')throw new ServiceError('Administrator access required.',403);
  const c=s.complaints.find(c=>c.id===body.id);
  const log=(label:string,id='')=>s.audit.unshift({id:crypto.randomUUID(),action:label,actor,at,complaintId:id});
- const communicate=(c:Complaint,template:string)=>s.communications.unshift({id:crypto.randomUUID(),complaintId:c.id,template,channel:'WhatsApp → SMS',recipient:c.mobile,status:'Not sent · test mode',at,reason:'Messaging provider has not been configured.'});
- const transition=(c:Complaint,next:Status,note:string,verified=false)=>{validateTransition(c,next,note,role,verified);c.status=next;c.history.push({status:next,note,at,actor});delete s.challenges?.[c.id];log(`Status changed to ${next}`,c.id);communicate(c,next);};
+ const communicate=(c:Complaint,template:string,message:string)=>s.communications.unshift({id:crypto.randomUUID(),complaintId:c.id,template,channel:'WhatsApp',recipient:c.mobile,status:'Not sent · WhatsApp setup pending',at,reason:'WhatsApp Business sender, approved templates and verified resident numbers are not configured.',message});
+ const issueClosure=async(c:Complaint)=>{const prev=s.challenges?.[c.id];if(prev&&now-prev.lastSent<60000)throw new ServiceError('Wait 60 seconds before requesting another code.',429);const buf=new Uint32Array(1);crypto.getRandomValues(buf);const code=String(100000+buf[0]%900000);s.challenges??={};s.challenges[c.id]={hash:await digest(`${c.id}:${code}`),expires:now+300000,attempts:0,lastSent:now,demoCode:code};communicate(c,'Closure OTP',`Closure requested for ${c.id}. Review the completed work and verify the OTP in your app only if the issue is resolved. The code expires in 5 minutes.`);log('Test WhatsApp closure challenge issued',c.id);return {expiresAt:new Date(now+300000).toISOString(),delivery:'setup-required',channel:'WhatsApp'};};
+ const transition=(c:Complaint,next:Status,note:string,verified=false)=>{validateTransition(c,next,note,role,verified);c.status=next;c.history.push({status:next,note,at,actor});delete s.challenges?.[c.id];log(`Status changed to ${next}`,c.id);communicate(c,next,`SAMADHAN reference ${c.id}: ${next}. ${note}`);};
  if(action==='save-category'){
   const input=body.category;
   if(!input||typeof input!=='object')throw new ServiceError('Enter category details.');
@@ -43,11 +45,12 @@ export async function applyAction(s:StoredWorkspace,body:any,role:'admin'|'resid
   if(!Array.isArray(body.media)||body.media.length<1||body.media.length>5)throw new ServiceError('Attach 1–5 photographs.');
   if(!Number.isFinite(body.lat)||Math.abs(body.lat)>90||!Number.isFinite(body.lng)||Math.abs(body.lng)>180)throw new ServiceError('Confirm valid coordinates.');
   if(s.complaints.filter(c=>now-+new Date(c.createdAt)<60000).length>=5)throw new ServiceError('Please wait a minute before submitting another report.',429);
-  const id=`WC-W12-${new Date(now).getFullYear()}-${crypto.randomUUID().slice(0,8).toUpperCase()}`;
+  let id:string;do{id=`WC-W12-${new Date(now).getFullYear()}-${crypto.randomUUID().replaceAll('-','').slice(0,12).toUpperCase()}`;}while(s.complaints.some(c=>c.id===id));
   const complaint:Complaint={id,title:text(body.title,4,120),description:text(body.description,10),categoryId:category.id,category:category.nameEn,locality:text(body.locality,4,200),lat:body.lat,lng:body.lng,priority:'Normal',status:'Submitted',assignee:'',resident:'Demo Resident',mobile:'•••••• 2100',createdAt:at,dueAt:new Date(now+s.settings.slaHours*3600000).toISOString(),history:[{status:'Submitted',note:'Complaint submitted. Media consent recorded: pilot-v1.',at,actor}],media:body.media,afterMedia:[]};
-  s.complaints.unshift(complaint);log('Complaint submitted; consent pilot-v1',id);communicate(complaint,'Complaint submitted');return {id};
+  s.complaints.unshift(complaint);log('Complaint submitted; consent pilot-v1',id);communicate(complaint,'Complaint acknowledgement',`Your complaint has been registered. Reference: ${id}. ${complaint.title}. Track progress in SAMADHAN → My complaints.`);return {id,referenceNumber:id,delivery:'setup-required',channel:'WhatsApp'};
  }
  if(action==='announcement'){s.announcements.unshift({id:crypto.randomUUID(),title:text(body.title,5,120),body:text(body.body,10),priority:'Service notice',at});log('Ward notice published');return {};}
+ if(action==='save-branding'){s.settings.splashImageId=text(body.splashImageId,0,100);log('Updated published app splash image');return {};}
  if(action==='settings'){if(!Number.isInteger(body.slaHours)||body.slaHours<1||body.slaHours>720)throw new ServiceError('Resolution SLA must be 1–720 hours.');s.settings.contact=text(body.contact,5,200);s.settings.slaHours=body.slaHours;log('Ward settings updated');return {};}
  if(!c)throw new ServiceError('Complaint not found.',404);
  if(action==='edit'){
@@ -59,13 +62,16 @@ export async function applyAction(s:StoredWorkspace,body:any,role:'admin'|'resid
   if(body.afterMedia){if(!Array.isArray(body.afterMedia)||body.afterMedia.length>5)throw new ServiceError('Maximum 5 evidence photographs.');c.afterMedia=body.afterMedia;}
   log('Complaint classification / assignment / evidence updated',c.id);return {};
  }
- if(action==='transition'){transition(c,body.status,text(body.note??'',1));return {};}
+ if(action==='transition'){transition(c,body.status,text(body.note??'',1));if(body.status==='Resolution Proposed')return await issueClosure(c);return {};}
  if(action==='dispute'){if(role!=='resident')throw new ServiceError('Use the resident dispute flow.',403);transition(c,'Reopened',text(body.note,8));return {};}
  if(action==='issue-closure-code'){
   if(role!=='resident'||c.status!=='Resolution Proposed')throw new ServiceError('A resident can request verification after resolution is proposed.',403);
-  const prev=s.challenges?.[c.id];if(prev&&now-prev.lastSent<60000)throw new ServiceError('Wait 60 seconds before requesting another code.',429);
-  const buf=new Uint32Array(1);crypto.getRandomValues(buf);const code=String(100000+buf[0]%900000);
-  s.challenges??={};s.challenges[c.id]={hash:await digest(`${c.id}:${code}`),expires:now+300000,attempts:0,lastSent:now};communicate(c,'Closure OTP (simulation)');log('Test closure challenge issued',c.id);return {demoCode:code,expiresAt:new Date(now+300000).toISOString()};
+  return await issueClosure(c);
+ }
+ if(action==='preview-closure-code'){
+  if(role!=='resident'||c.status!=='Resolution Proposed')throw new ServiceError('Resident test preview required.',403);
+  const ch=s.challenges?.[c.id];if(!ch?.demoCode||ch.expires<=now||ch.attempts>=5)throw new ServiceError('Test code expired or locked. Request another code.');
+  return {demoCode:ch.demoCode,expiresAt:new Date(ch.expires).toISOString(),delivery:'setup-required'};
  }
  if(action==='verify-closure'){
   if(role!=='resident'||c.status!=='Resolution Proposed')throw new ServiceError('Resident verification required.',403);
