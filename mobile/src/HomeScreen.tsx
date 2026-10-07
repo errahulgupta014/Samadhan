@@ -1,14 +1,201 @@
+import {Text, Pressable, GradientButton, Icon, Glyph, IconButton, IconTile, LinkLabel, StatusBadge, cardSurface, colors, glass, radius, textStyles, tint, typeScale} from './Design';
+import BrandingSlider from './BrandingSlider';
+import type {Connection} from './api';
 import React from 'react';
-import {View,Text,Pressable,StyleSheet} from 'react-native';
-import Ionicons from '@expo/vector-icons/Ionicons';
-import type {Workspace,Complaint} from '../shared/domain';
-import {Chakra,palette} from './Brand';
-type Props={data:Workspace;hindi:boolean;name:string;navigate:(page:string)=>void;openComplaint:(c:Complaint)=>void};
-export default function HomeScreen({data,hindi,name,navigate,openComplaint}:Props){const t=(a:string,b:string)=>hindi?b:a;const unread=data.notifications?.filter(n=>!n.read).length??0;const counts=[{label:t('In progress','प्रगति में'),n:data.complaints.filter(c=>!['Closed','Resolution Proposed','Rejected / Duplicate'].includes(c.status)).length,color:'#B76316',bg:'#FFF1E0',icon:'hourglass-outline'},{label:t('To confirm','पुष्टि करें'),n:data.complaints.filter(c=>c.status==='Resolution Proposed').length,color:'#254D85',bg:'#EEF2FA',icon:'checkmark-done-outline'},{label:t('Resolved','समाधान हुआ'),n:data.complaints.filter(c=>c.status==='Closed').length,color:'#167347',bg:'#EDF6EC',icon:'shield-checkmark-outline'}];return <>
- <View style={s.greeting}><View style={{flex:1}}><Text style={s.eyebrow}>{t('A BETTER CITY STARTS WITH YOU','बेहतर शहर की शुरुआत आपसे')}</Text><Text style={s.hello}>{hindi?'नमस्कार,':`Namaste, ${name==='Demo Resident'?'neighbour':name.split(' ')[0]}.`}</Text><View style={s.location}><Ionicons name="location" size={13} color={palette.green}/><Text style={s.locationText}>{data.municipality?.published?data.municipality.name:`${data.settings.ward} · ${data.settings.city}`}</Text></View></View><Pressable accessibilityRole="button" accessibilityLabel={`Notifications, ${unread} unread`} onPress={()=>navigate('notifications')} style={s.bell}><Ionicons name="notifications-outline" size={22} color={palette.navy}/>{unread>0&&<View style={s.dot}/>}</Pressable></View>
- <Pressable accessibilityRole="button" onPress={()=>navigate('report')} style={s.hero}><View style={s.heroRing}/><View style={s.heroRingSmall}/><View style={s.heroBadge}><View style={s.liveDot}/><Text style={s.heroEyebrow}>{t('YOUR VOICE MATTERS','आपकी आवाज़ मायने रखती है')}</Text></View><Text style={s.heroTitle}>{t('Small actions.\nA stronger city.','छोटी पहल।\nबेहतर अपना शहर।')}</Text><Text style={s.heroCopy}>{t('Spot a problem? Let’s make it right, together.','कोई समस्या दिखी? आइए, मिलकर समाधान करें।')}</Text><View style={s.heroAction}><View style={s.plus}><Ionicons name="add" size={21} color={palette.navy}/></View><Text style={s.heroActionText}>{t('Report a problem','शिकायत दर्ज करें')}</Text><Ionicons name="arrow-forward" size={20} color="white"/></View><View style={s.skyline}>{[35,54,40,75,48,63].map((height,i)=><View key={i} style={[s.building,{height}]}>{[0,1,2].map(n=><View key={n} style={s.windows}><View style={s.window}/><View style={s.window}/></View>)}</View>)}</View></Pressable>
- <View style={s.stats}>{counts.map(c=><View style={[s.stat,{backgroundColor:c.bg}]} key={c.label}><Ionicons name={c.icon as keyof typeof Ionicons.glyphMap} color={c.color} size={20}/><Text style={[s.statNumber,{color:c.color}]}>{c.n.toString().padStart(2,'0')}</Text><Text style={s.statLabel}>{c.label}</Text></View>)}</View>
- <View style={s.section}><Text style={s.sectionTitle}>{t('Your city, connected','अपने शहर से जुड़ें')}</Text><Chakra size={20}/></View><View style={s.services}>{[['classifieds','pricetags-outline',t('Classifieds','विज्ञापन'),t('Local opportunities','स्थानीय अवसर'),'#FFF0DE','#B76419'],['city','compass-outline',t('Explore city','अपना शहर'),t('Places & heritage','स्थल और विरासत'),'#EEF3FC','#315689'],['notices','megaphone-outline',t('Ward updates','वार्ड की खबर'),t('Stay informed','नई जानकारी'),'#EAF5EC','#247443']].map(([page,icon,label,caption,bg,color])=><Pressable accessibilityRole="button" key={page} onPress={()=>navigate(page)} style={s.service}><View style={[s.serviceIcon,{backgroundColor:bg}]}><Ionicons name={icon as keyof typeof Ionicons.glyphMap} color={color} size={23}/></View><Text style={s.serviceName}>{label}</Text><Text style={s.serviceCaption}>{caption}</Text></Pressable>)}</View>
- <View style={s.section}><Text style={s.sectionTitle}>{t('My recent complaints','मेरी हाल की शिकायतें')}</Text><Pressable accessibilityRole="button" onPress={()=>navigate('complaints')}><Text style={s.seeAll}>{t('View all →','सभी देखें →')}</Text></Pressable></View>{!data.complaints.length&&<Text style={s.empty}>{t('Your first step towards a better neighbourhood starts here.','बेहतर मोहल्ले की ओर पहला कदम यहीं से शुरू करें।')}</Text>}{data.complaints.slice(0,3).map(c=><Pressable accessibilityRole="button" style={s.complaint} key={c.id} onPress={()=>openComplaint(c)}><View style={s.complaintTop}><Text style={s.category}>{c.category}</Text><Text style={[s.status,{color:c.status==='Closed'?palette.green:'#A26024',backgroundColor:c.status==='Closed'?'#EEF6EC':'#FFF3E6'}]}>{c.status}</Text></View><Text style={s.complaintTitle}>{c.title}</Text><View style={s.complaintBottom}><Text style={s.address}>⌖ {c.locality}</Text><Ionicons name="arrow-forward" size={18} color={palette.navy}/></View></Pressable>)}<View style={s.footer}><View style={[s.footerLine,{backgroundColor:'#ECA558'}]}/><Text style={s.footerText}>जनता की बात, समाधान के साथ</Text><View style={[s.footerLine,{backgroundColor:'#3F8C57'}]}/></View>
- </>;}
-const s=StyleSheet.create({greeting:{flexDirection:'row',alignItems:'center',gap:10,marginTop:8,marginBottom:24},eyebrow:{fontSize:8,letterSpacing:1.5,color:'#8B6947',fontWeight:'700'},hello:{fontSize:27,fontWeight:'700',letterSpacing:-.8,color:palette.navy,marginTop:10},location:{flexDirection:'row',gap:5,alignItems:'center',marginTop:10},locationText:{fontSize:12,color:palette.muted},bell:{backgroundColor:'white',width:46,height:46,borderRadius:23,alignItems:'center',justifyContent:'center',borderWidth:1,borderColor:'#EBE7DD'},dot:{height:7,width:7,borderRadius:4,backgroundColor:'#EF8B30',position:'absolute',top:10,right:12},hero:{backgroundColor:palette.navy,borderRadius:26,padding:25,overflow:'hidden',minHeight:255},heroRing:{position:'absolute',right:-90,top:-75,width:270,height:270,borderRadius:150,borderWidth:40,borderColor:'#21395E'},heroRingSmall:{position:'absolute',right:-60,top:-45,width:210,height:210,borderRadius:110,borderWidth:1,borderColor:'#345073'},heroBadge:{flexDirection:'row',gap:7,alignItems:'center'},liveDot:{height:5,width:5,borderRadius:3,backgroundColor:'#FFAA4E'},heroEyebrow:{fontSize:8,letterSpacing:1.6,color:'#F6BC78',fontWeight:'700'},heroTitle:{fontSize:30,lineHeight:37,fontWeight:'700',letterSpacing:-.5,color:'#fff',marginTop:17},heroCopy:{fontSize:12,lineHeight:19,color:'#CBD4E1',maxWidth:225,marginTop:12,marginBottom:22},heroAction:{flexDirection:'row',alignItems:'center',gap:9,zIndex:2},plus:{backgroundColor:'#FFA347',height:31,width:31,borderRadius:10,justifyContent:'center',alignItems:'center'},heroActionText:{fontSize:13,fontWeight:'700',color:'white'},skyline:{position:'absolute',right:0,bottom:0,flexDirection:'row',gap:4,alignItems:'flex-end',opacity:.25},building:{width:24,backgroundColor:'#6CA286',paddingTop:8,gap:7,borderTopLeftRadius:3,borderTopRightRadius:3},windows:{flexDirection:'row',justifyContent:'center',gap:4},window:{width:4,height:5,backgroundColor:'#E8F4EE'},stats:{flexDirection:'row',gap:10,marginTop:18},stat:{flex:1,padding:15,borderRadius:19},statNumber:{fontSize:27,fontWeight:'700',marginTop:13},statLabel:{fontSize:10,color:'#546174',marginTop:3},section:{flexDirection:'row',justifyContent:'space-between',alignItems:'center',marginTop:30,marginBottom:16},sectionTitle:{fontSize:17,fontWeight:'700',color:palette.navy,letterSpacing:-.3},seeAll:{fontSize:11,color:palette.green,fontWeight:'700'},services:{flexDirection:'row',gap:9},service:{flex:1,backgroundColor:'white',borderWidth:1,borderColor:'#EEEAE2',borderRadius:18,paddingVertical:17,alignItems:'center'},serviceIcon:{width:44,height:44,borderRadius:14,alignItems:'center',justifyContent:'center',marginBottom:12},serviceName:{fontSize:12,fontWeight:'700',color:palette.navy},serviceCaption:{fontSize:8,color:palette.muted,marginTop:6},complaint:{backgroundColor:'white',borderWidth:1,borderColor:'#EEEAE2',padding:18,borderRadius:19,marginBottom:11},complaintTop:{flexDirection:'row',justifyContent:'space-between',gap:10,alignItems:'center'},category:{fontSize:9,color:'#788396',flex:1},status:{paddingVertical:5,paddingHorizontal:8,borderRadius:7,fontSize:8,fontWeight:'600'},complaintTitle:{fontSize:14,lineHeight:22,fontWeight:'600',color:palette.navy,marginVertical:13},complaintBottom:{flexDirection:'row',justifyContent:'space-between'},address:{fontSize:10,color:'#7B8694'},empty:{color:palette.muted,fontSize:14,lineHeight:23},footer:{flexDirection:'row',alignItems:'center',gap:12,justifyContent:'center',marginTop:25},footerLine:{height:1,width:20},footerText:{fontSize:11,color:'#748270'}});
+import {View, StyleSheet} from 'react-native';
+import type {Workspace, Complaint} from '../shared/domain';
+import {Chakra} from './Brand';
+import {SupportCard} from './Support';
+import {tileVisible, visibleUnread} from './appConfig';
+import {useAppConfig} from './appConfigContext';
+import {categoryLabel, residentPlace, translator, type IconName} from './labels';
+
+type Props = {connection: Connection; data: Workspace; hindi: boolean; name: string; navigate: (page: string) => void; openComplaint: (c: Complaint) => void};
+
+type Stat = {key: string; label: string; n: number; icon: IconName; fg: string; bg: string; accent: string};
+type Service = {page: string; icon: IconName; label: string; caption: string; color: string; tile: 'classifieds' | 'activities' | 'city' | 'notices'};
+
+export default function HomeScreen({connection, data, hindi, name, navigate, openComplaint}: Props) {
+  const t = translator(hindi);
+  const config = useAppConfig();
+  // Unread notifications of switched-off sections (Ads, Activities) cannot be opened, so they are not counted.
+  const unread = data.unread ? visibleUnread(data.unread, config) : (data.notifications?.filter(n => !n.read).length ?? 0);
+  const place = residentPlace(data.ward, hindi);
+  const stats: Stat[] = [
+    {
+      key: 'progress',
+      label: t('In progress', 'प्रगति में'),
+      n: data.complaints.filter(c => !['Closed', 'Resolution Proposed', 'Rejected / Duplicate'].includes(c.status)).length,
+      icon: 'hourglass-outline',
+      fg: colors.saffronText,
+      bg: colors.saffronSoft,
+      accent: colors.saffron,
+    },
+    {
+      key: 'confirm',
+      label: t('To confirm', 'पुष्टि करें'),
+      n: data.complaints.filter(c => c.status === 'Resolution Proposed').length,
+      icon: 'checkmark-done-outline',
+      fg: colors.info,
+      bg: colors.infoBg,
+      accent: colors.navySoft,
+    },
+    {
+      key: 'resolved',
+      label: t('Resolved', 'समाधान हुआ'),
+      n: data.complaints.filter(c => c.status === 'Closed').length,
+      icon: 'shield-checkmark-outline',
+      fg: colors.success,
+      bg: colors.successBg,
+      accent: colors.green,
+    },
+  ];
+  const services = (
+    [
+      {page: 'classifieds', tile: 'classifieds', icon: 'pricetags-outline', label: t('Classifieds', 'विज्ञापन'), caption: t('Local opportunities', 'स्थानीय अवसर'), color: colors.saffron},
+      {page: 'activities', tile: 'activities', icon: 'calendar-outline', label: t('Activities', 'गतिविधियाँ'), caption: t('Campaigns & programmes', 'अभियान और कार्यक्रम'), color: colors.green},
+      {page: 'city', tile: 'city', icon: 'compass-outline', label: t('Explore city', 'अपना शहर'), caption: t('Places & heritage', 'स्थल और विरासत'), color: colors.navySoft},
+      {page: 'notices', tile: 'notices', icon: 'megaphone-outline', label: t('Ward updates', 'वार्ड की खबर'), caption: t('Stay informed', 'नई जानकारी'), color: colors.green},
+    ] satisfies Service[]
+  ).filter(service => tileVisible(config, service.tile));
+
+  return (
+    <>
+      <View style={s.greeting}>
+        <View style={s.flex}>
+          <Text style={s.eyebrow}>{t('WELCOME TO YOUR WARD', 'आपके वार्ड में स्वागत है')}</Text>
+          <Text accessibilityRole="header" style={s.hello}>
+            {t(`Welcome, ${name}`, `स्वागत है, ${name}`)}
+          </Text>
+          {!!place && (
+            <View style={s.place}>
+              <Icon name="location-outline" size={15} color={colors.textSecondary} />
+              <Text style={s.placeText}>{place}</Text>
+            </View>
+          )}
+          <Text style={s.welcomeCopy}>{t('Glad to have you with us. Report a problem, follow its progress and stay close to your ward.', 'आपका साथ पाकर अच्छा लगा। शिकायत दर्ज करें, उसकी प्रगति देखें और अपने वार्ड से जुड़े रहें।')}</Text>
+        </View>
+        <IconButton
+          round
+          size={48}
+          badge={unread}
+          icon="notifications-outline"
+          label={hindi ? `सूचनाएं, ${unread} अपठित` : `Notifications, ${unread} unread`}
+          onPress={() => navigate('notifications')}
+          style={s.bell}
+        />
+      </View>
+
+      <BrandingSlider settings={data.settings} connection={connection} hindi={hindi} />
+
+      <View style={s.reportRow}>
+        <View style={s.flex}>
+          <Text accessibilityRole="header" style={s.reportTitle}>{t('Have a problem in your ward?', 'आपके वार्ड में कोई समस्या है?')}</Text>
+          <Text style={s.reportCaption}>{t('Report it in a minute.', 'एक मिनट में दर्ज करें।')}</Text>
+        </View>
+        <GradientButton tone="saffron" level="sm" accessibilityLabel={t('Report a problem', 'शिकायत दर्ज करें')} onPress={() => navigate('report')} style={s.reportButton}>
+          <Icon name="megaphone" size={18} color={colors.ink} />
+          <Text style={s.reportButtonText}>{t('Report', 'शिकायत')}</Text>
+        </GradientButton>
+      </View>
+
+      <View style={s.stats}>
+        {stats.map(stat => (
+          <View accessible accessibilityLabel={`${stat.label}: ${stat.n}`} style={[s.stat, {backgroundColor: glass(0.92, stat.bg), borderColor: tint(stat.accent, 0.6)}]} key={stat.key}>
+            <IconTile name={stat.icon} size={36} color={stat.accent} />
+            <Text style={[s.statNumber, {color: stat.fg}]}>{stat.n.toString().padStart(2, '0')}</Text>
+            <Text style={s.statLabel}>{stat.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      {services.length > 0 && (
+        <>
+          <View style={s.section}>
+            <Text accessibilityRole="header" style={s.sectionTitle}>
+              {t('Your city, connected', 'अपने शहर से जुड़ें')}
+            </Text>
+            <Chakra size={22} />
+          </View>
+          <View style={s.services}>
+            {services.map(service => (
+              <Pressable accessibilityRole="button" key={service.page} onPress={() => navigate(service.page)} style={s.service}>
+                <IconTile name={service.icon} size={48} color={service.color} style={s.serviceIcon} />
+                <Text style={s.serviceName}>{service.label}</Text>
+                <Text style={s.serviceCaption}>{service.caption}</Text>
+              </Pressable>
+            ))}
+          </View>
+        </>
+      )}
+
+      <View style={s.section}>
+        <Text accessibilityRole="header" style={s.sectionTitle}>
+          {t('My recent complaints', 'मेरी हाल की शिकायतें')}
+        </Text>
+        <Pressable accessibilityRole="button" accessibilityLabel={t('View all complaints', 'सभी शिकायतें देखें')} hitSlop={8} onPress={() => navigate('complaints')}>
+          <LinkLabel>{t('View all', 'सभी देखें')}</LinkLabel>
+        </Pressable>
+      </View>
+      {!data.complaints.length && <Text style={s.empty}>{t('Your first step towards a better neighbourhood starts here.', 'बेहतर मोहल्ले की ओर पहला कदम यहीं से शुरू करें।')}</Text>}
+      {data.complaints.slice(0, 3).map(c => (
+        <Pressable accessibilityRole="button" accessibilityLabel={`${c.title}. ${categoryLabel(c, data.categories, hindi)}`} style={s.complaint} key={c.id} onPress={() => openComplaint(c)}>
+          <View style={s.complaintTop}>
+            <Text style={s.category}>{categoryLabel(c, data.categories, hindi)}</Text>
+            <StatusBadge status={c.status} hindi={hindi} />
+          </View>
+          <Text style={s.complaintTitle}>{c.title}</Text>
+          <View style={s.complaintBottom}>
+            <Icon name="location-outline" size={15} color={colors.textSecondary} />
+            <Text style={s.address}>{c.locality}</Text>
+            <Glyph name="forward" size={18} color={colors.navy} />
+          </View>
+        </Pressable>
+      ))}
+      <SupportCard hindi={hindi} />
+      <View style={s.footer}>
+        <View style={[s.footerLine, {backgroundColor: colors.saffron}]} />
+        <Text style={s.footerText}>जनता की बात, समाधान के साथ</Text>
+        <View style={[s.footerLine, {backgroundColor: colors.flagGreen}]} />
+      </View>
+    </>
+  );
+}
+
+const s = StyleSheet.create({
+  reportRow: {...cardSurface(glass(0.92), {radius: radius.lg}), flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, paddingHorizontal: 16, marginTop: 18},
+  reportTitle: {fontSize: typeScale.bodyMd.fontSize, lineHeight: 22, fontWeight: '700', color: colors.navy},
+  reportCaption: {fontSize: 13, lineHeight: 19, color: colors.textSecondary, marginTop: 2},
+  reportButton: {paddingVertical: 10, paddingHorizontal: 14, borderRadius: radius.pill},
+  reportButtonText: {fontSize: 14, fontWeight: '700', color: colors.ink},
+  flex: {flex: 1},
+  greeting: {flexDirection: 'row', alignItems: 'flex-start', gap: 12, marginTop: 8, marginBottom: 18},
+  bell: {marginTop: 8, marginRight: 4},
+  eyebrow: {...textStyles.eyebrow, color: colors.saffronText},
+  hello: {...textStyles.h1, marginTop: 8, marginBottom: 0},
+  place: {flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6},
+  placeText: {...textStyles.caption, flexShrink: 1},
+  welcomeCopy: {...textStyles.body, marginTop: 8},
+  stats: {flexDirection: 'row', gap: 10, marginTop: 18},
+  stat: {...cardSurface(colors.surface, {radius: radius.lg}), flex: 1, padding: 14, gap: 4},
+  statNumber: {fontSize: 28, lineHeight: 36, fontWeight: '700', marginTop: 8},
+  statLabel: {fontSize: 12, lineHeight: 17, color: colors.textSecondary},
+  section: {flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 28, marginBottom: 14, gap: 10},
+  sectionTitle: {...textStyles.h2, flexShrink: 1},
+  // Four tiles: a 2 x 2 grid (a single row would leave each caption about 60 px wide).
+  services: {flexDirection: 'row', flexWrap: 'wrap', gap: 10},
+  service: {...cardSurface(glass(0.9)), flexGrow: 1, flexBasis: '45%', paddingVertical: 16, paddingHorizontal: 6, alignItems: 'center'},
+  serviceIcon: {marginBottom: 12},
+  serviceName: {fontSize: 13, lineHeight: 19, textAlign: 'center', fontWeight: '700', color: colors.navy},
+  serviceCaption: {fontSize: 12, lineHeight: 17, textAlign: 'center', paddingHorizontal: 4, color: colors.textSecondary, marginTop: 5},
+  complaint: {...cardSurface(glass(0.9)), padding: 16, marginBottom: 12},
+  complaintTop: {flexDirection: 'row', justifyContent: 'space-between', gap: 10, alignItems: 'center'},
+  category: {fontSize: 12, lineHeight: 17, color: colors.textSecondary, flex: 1},
+  complaintTitle: {fontSize: typeScale.bodyMd.fontSize, lineHeight: 23, fontWeight: '600', color: colors.navy, marginVertical: 12},
+  complaintBottom: {flexDirection: 'row', alignItems: 'center', gap: 6},
+  address: {fontSize: 12, lineHeight: 17, color: colors.textSecondary, flex: 1},
+  empty: {...textStyles.body},
+  footer: {flexDirection: 'row', alignItems: 'center', gap: 12, justifyContent: 'center', marginTop: 24},
+  footerLine: {height: 2, width: 22, borderRadius: 1},
+  footerText: {fontSize: 12, color: colors.textSecondary},
+});

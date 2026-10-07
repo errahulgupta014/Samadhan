@@ -1,0 +1,66 @@
+/* Admin side panel, themed for BOTH the desktop sidebar and the mobile sheet (the mobile sheet is portalled outside .main-sidebar,
+   so these rules target [data-sidebar="sidebar"], which both share). Navy panel, white text, white logo tile. */
+[data-sidebar="sidebar"]{background:#172D4F;color:#DCE6F1;border:0}
+[data-sidebar="sidebar"] .brand{display:flex;align-items:center;gap:12px;padding:22px 18px 20px;text-decoration:none}
+[data-sidebar="sidebar"] .brand img{width:52px;height:57px;flex:none;background:#fff;border-radius:13px;padding:5px;object-fit:contain}
+[data-sidebar="sidebar"] .brand span{display:block;min-width:0}
+[data-sidebar="sidebar"] .brand b{display:block;color:#fff;font-size:19px;font-weight:800;letter-spacing:1px;line-height:1.2}
+[data-sidebar="sidebar"] .brand small{display:block;color:#C9D6E4;font-size:11px;line-height:1.35;margin-top:3px}
+[data-sidebar="sidebar"] .nav-label{color:#A9BBD0;font-size:11px;font-weight:700;letter-spacing:1.2px;margin:14px 18px 8px}
+[data-sidebar="sidebar"] .nav-button{color:#DCE6F1;font-weight:600}
+[data-sidebar="sidebar"] .nav-button svg{color:#B7C7DA}
+[data-sidebar="sidebar"] .nav-button:hover{background:rgba(255,255,255,.10);color:#fff}
+[data-sidebar="sidebar"] .nav-button:hover svg{color:#fff}
+[data-sidebar="sidebar"] .nav-button[data-active="true"]{background:#FFF0DC;color:#172D4F}
+[data-sidebar="sidebar"] .nav-button[data-active="true"] svg{color:#C4620E}
+[data-sidebar="sidebar"] .nav-button em{font-style:normal;margin-left:auto;background:#F3A24C;color:#172D4F;border-radius:999px;font-size:11px;font-weight:700;padding:1px 8px}
+[data-sidebar="sidebar"] .nav-button:focus-visible{outline:2px solid #F3A24C;outline-offset:2px}
+
+/* Top bar: the page title (replaces the old "Workspace > Page" breadcrumb) */
+.topbar .topbar-title,.topbar-title{font-size:22px;font-weight:800;color:#172D4F;letter-spacing:-.2px;line-height:1.2}
+@media(max-width:640px){.topbar .topbar-title,.topbar-title{font-size:20px}}
+.avatar-img{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}
+.avatar.small-avatar{overflow:hidden}
+
+/* My profile (read only) */
+.my-profile{padding:24px;max-width:760px}
+.my-profile-head{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.my-profile-head h2{margin:0;font-size:20px;color:#172D4F}
+.my-profile-head p{margin:2px 0 0;color:#5B6B7F;font-size:13px}
+.my-profile-avatar{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;background:#172D4F;color:#fff;font-size:22px;font-weight:700}
+.my-profile-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px 22px;margin:0 0 22px}
+.my-profile-grid dt{font-size:12px;color:#5B6B7F;margin-bottom:3px}
+.my-profile-grid dd{margin:0;font-size:15px;font-weight:600;color:#172D4F;overflow-wrap:anywhere}
+.my-profile-sub{font-size:14px;margin:0 0 10px;color:#172D4F}
+.my-profile-perms{list-style:none;margin:0 0 18px;padding:0;display:grid;gap:8px}
+.my-profile-perms li{border:1px solid #E1E8EE;border-radius:10px;padding:10px 12px;background:#FAFBFC}
+.my-profile-perms b{display:block;font-size:14px;color:#172D4F}
+.my-profile-perms small{display:block;font-size:12px;color:#5B6B7F;margin-top:2px}
+.my-profile-note{font-size:12px;color:#5B6B7F;margin:0}
+.my-profile-avatar{overflow:hidden;width:84px;height:84px;font-size:32px;flex:none}
+.my-profile-avatar img{width:100%;height:100%;object-fit:cover;display:block}
+.my-profile-head{align-items:flex-start;gap:18px}
+.my-profile-photo-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px}
+.my-profile-photo-actions .button{display:inline-flex;align-items:center;gap:6px;padding:8px 12px;font-size:13px}
+.my-profile-hint{display:block;font-size:12px;color:#5B6B7F}
+
+/* Top bar: logo and tag line in the centre so the bar never looks empty */
+.topbar{position:relative}
+.topbar-brand{display:none;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);align-items:center;gap:10px;pointer-events:none;white-space:nowrap}
+.topbar-brand img{height:38px;width:auto;display:block}
+.topbar-brand span{display:flex;flex-direction:column;line-height:1.15}
+.topbar-brand b{font-size:15px;font-weight:800;letter-spacing:1.4px;color:#172D4F}
+.topbar-brand small{font-size:12px;color:#5B6B7F;margin-top:2px}
+@media(min-width:960px){.topbar-brand{display:flex}}
+
+/* Closure verification (admin enters the OTP the resident received on WhatsApp) */
+.closure-verify{border:1px solid #D9E3DD;background:#F4FAF6;border-radius:12px;padding:14px 16px;margin:12px 0;display:grid;gap:8px}
+.closure-verify-head{display:flex;align-items:center;gap:8px;color:#197448}
+.closure-verify p{margin:0;font-size:13px;color:#3F5163;line-height:1.5}
+.closure-verify label{font-size:12px;font-weight:700;color:#172D4F}
+.closure-verify-row{display:flex;gap:8px;flex-wrap:wrap}
+.closure-verify-row input{flex:1 1 140px;min-width:0;min-height:40px;border:1px solid #B7C7D0;border-radius:8px;padding:0 12px;font-size:16px;letter-spacing:3px}
+.closure-verify-row .button{white-space:normal}
+.closure-verify-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.closure-verify-foot span{font-size:12px;color:#197448}
+.closure-verify small{font-size:12px;color:#5B6B7F}

@@ -1,0 +1,1 @@
+ALTER TABLE `admin_users` ADD `avatar_media_id` text;

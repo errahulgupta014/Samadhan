@@ -1,27 +1,124 @@
 import assert from 'node:assert/strict';
-const base=process.env.TEST_BASE_URL||'http://localhost:5173';
-const login=await fetch(base+'/signin-with-chatgpt?return_to=/',{redirect:'manual'});
-const cookie=login.headers.getSetCookie().map(v=>v.split(';')[0]).join('; ');
-let version,data;
-async function api(body,token){const r=await fetch(base+'/api/workspace',{method:body?'POST':'GET',headers:{...(token?{Authorization:`Bearer ${token}`}:{cookie}),...(body?{'Content-Type':'application/json'}:{})},...(body?{body:JSON.stringify({...body,version})}:{})});const j=await r.json();if(j.version){version=j.version;data=j.data;}return {r,j};}
-await api();const originalProfile={...data.profile};await api({action:'save-profile',view:'resident',profile:{name:'QA Resident',email:'',address:'',language:'en',classifiedNotifications:true}});
-const token=(await api({action:'pair-mobile'})).j.token;
-await api(undefined,token);assert.equal(data.viewer.role,'Resident');assert.equal(data.audit.length,0);assert.equal('residentProfiles' in data,false);
-for(const action of ['save-classified','save-municipality','save-place','save-category','save-admin'])assert.equal((await api({action},token)).r.status,403,action);
-const nonce=Date.now();const category={nameEn:`QA Category ${nonce}`,nameHi:`टेस्ट ${nonce}`,icon:'leaf-outline',color:'#147754',sortOrder:50,enabled:true};
-const categoryId=(await api({action:'save-category',category})).j.categoryId;assert.ok(categoryId);
-const cats=await fetch(base+'/api/categories',{headers:{Authorization:`Bearer ${token}`}});assert.equal(cats.status,200);assert.ok((await cats.json()).categories.some(c=>c.id===categoryId));
-const ad={title:`QA advertisement ${nonce}`,titleHi:'परीक्षण विज्ञापन',description:'Synthetic advertisement to verify admin publishing and resident inbox delivery.',descriptionHi:'',advertiser:'Local test only',contactPhone:'',url:'',imageId:'',startsAt:new Date(Date.now()-1000).toISOString(),endsAt:new Date(Date.now()+86400000).toISOString()};
-const saved=await api({action:'save-classified',classified:ad});assert.equal(saved.r.status,200);const id=saved.j.id;
-await api(undefined,token);assert.ok(!data.classifieds.some(a=>a.id===id));
-const published=await api({action:'publish-classified',id,status:'published'});assert.equal(published.r.status,200);assert.equal(published.j.notificationCreated,true);
-await api(undefined,token);assert.ok(data.classifieds.some(a=>a.id===id));const n=data.notifications.find(n=>n.classifiedId===id);assert.ok(n);assert.equal(n.read,false);
-assert.equal((await api({action:'read-notification',id:n.id},token)).r.status,200);await api(undefined,token);assert.equal(data.notifications.find(x=>x.id===n.id).read,true);
-const repeated=await api({action:'publish-classified',id,status:'published'});assert.equal(repeated.j.notificationCreated,false);
-const grant=await api({action:'save-admin',admin:{email:`qa-${nonce}@example.invalid`,role:'Auditor',permissions:[],active:false}});assert.equal(grant.r.status,200);assert.ok(grant.j.admins.some(a=>a.email===`qa-${nonce}@example.invalid`&&!a.active));
-const adminList=await fetch(base+'/api/workspace?section=admins',{headers:{Authorization:`Bearer ${token}`}});assert.equal(adminList.status,403);
-assert.equal((await api({action:'save-admin',admin:{email:'invalid',role:'Super Admin',active:true}})).r.status,400);
-await api({action:'publish-classified',id,status:'archived'});await api({action:'save-category',category:{...category,id:categoryId,enabled:false}});
-await api({action:'save-profile',view:'resident',profile:originalProfile});
-const logout=await fetch(base+'/api/logout',{method:'POST',headers:{Authorization:`Bearer ${token}`}});assert.equal(logout.status,200);assert.equal((await api(undefined,token)).r.status,401);
-console.log('PASS: server-driven categories, durable profile, resident permissions, draft visibility, ad publish → notification → read, duplicate suppression, admin grant validation, access-list privacy, logout token revocation. Synthetic ads/categories archived; QA admin remains disabled.');
+import {base, ownerCookie, registerResident, png} from './api-helpers.mjs';
+const cookie = await ownerCookie();
+let version, data;
+async function api(body, token) {
+ const r = await fetch(base + '/api/workspace', {method: body ? 'POST' : 'GET', headers: {...(token ? {Authorization: `Bearer ${token}`} : {cookie}), ...(body ? {'Content-Type': 'application/json'} : {})}, ...(body ? {body: JSON.stringify({...body, version})} : {})});
+ const j = await r.json(); if (j.version) {version = j.version; data = j.data;} return {r, j};
+}
+await api();
+// The resident is a real, OTP-registered synthetic resident (test OTP mode), not the admin pairing token.
+const {token, photoId: residentPhoto} = await registerResident('QA Community');
+await api(undefined, token); assert.equal(data.viewer.role, 'Resident'); assert.equal(data.audit.length, 0); assert.equal('residentProfiles' in data, false); assert.ok(data.profile.registeredAt); assert.equal(data.profile.classifiedNotifications, true); assert.equal(data.profile.activityNotifications, true, 'activity notifications default to on'); assert.deepEqual(data.unread, {complaints: 0, classifieds: 0, activities: 0, total: 0}); assert.ok(Array.isArray(data.activities));
+for (const action of ['save-classified', 'save-activity', 'publish-activity', 'save-municipality', 'save-place', 'save-category', 'save-admin', 'save-ward', 'delete-ward']) assert.equal((await api({action}, token)).r.status, 403, action);
+const nonce = Date.now(); const category = {nameEn: `QA Category ${nonce}`, nameHi: `टेस्ट ${nonce}`, icon: 'leaf-outline', color: '#147754', sortOrder: 50, enabled: true};
+// Every new category names the department that handles it.
+await api(); category.departmentId = (data.settings.departments ?? []).find(d => d.active)?.id;
+const categoryId = (await api({action: 'save-category', category})).j.categoryId; assert.ok(categoryId);
+const cats = await fetch(base + '/api/categories', {headers: {Authorization: `Bearer ${token}`}}); assert.equal(cats.status, 200); assert.ok((await cats.json()).categories.some(c => c.id === categoryId));
+const ad = {title: `QA advertisement ${nonce}`, titleHi: 'परीक्षण विज्ञापन', description: 'Synthetic advertisement to verify admin publishing and resident inbox delivery.', descriptionHi: '', advertiser: 'Local test only', contactPhone: '', url: '', imageId: '', startsAt: new Date(Date.now() - 1000).toISOString(), endsAt: new Date(Date.now() + 86400000).toISOString()};
+const saved = await api({action: 'save-classified', classified: ad}); assert.equal(saved.r.status, 200); const id = saved.j.id;
+await api(undefined, token); assert.ok(!data.classifieds.some(a => a.id === id));
+const published = await api({action: 'publish-classified', id, status: 'published'}); assert.equal(published.r.status, 200); assert.equal(published.j.notificationCreated, true);
+await api(undefined, token); assert.ok(data.classifieds.some(a => a.id === id)); const n = data.notifications.find(n => n.classifiedId === id); assert.ok(n); assert.equal(n.read, false); assert.equal(n.kind, 'classified'); assert.equal(data.unread.classifieds >= 1, true);
+assert.equal((await api({action: 'read-notification', id: n.id}, token)).r.status, 200); await api(undefined, token); assert.equal(data.notifications.find(x => x.id === n.id).read, true);
+const repeated = await api({action: 'publish-classified', id, status: 'published'}); assert.equal(repeated.j.notificationCreated, false);
+// ---------------------------------------------------------------- activities: draft -> publish -> resident-visible (+ notification, image) -> archive
+const form = new FormData(); form.append('file', new Blob([png], {type: 'image/png'}), 'qa-activity.png');
+const actImage = (await (await fetch(base + '/api/media', {method: 'POST', headers: {cookie}, body: form})).json()).id; assert.ok(actImage);
+const mediaOf = (id, bearer) => fetch(base + '/api/media?id=' + id, {headers: bearer ? {Authorization: `Bearer ${bearer}`} : {cookie}});
+const DAY = 86400000; const activity = {title: `QA activity ${nonce}`, titleHi: 'परीक्षण गतिविधि', description: 'Synthetic programme used to verify activity publishing, visibility and notifications.', descriptionHi: '', organizer: 'Nagar Parishad, QA (test)', organizerHi: '', venue: 'QA ground', venueHi: '', startsAt: new Date(Date.now() + DAY).toISOString(), endsAt: new Date(Date.now() + 2 * DAY).toISOString(), imageId: actImage, contactPhone: '', url: 'https://example.org/qa'};
+for (const [label, patch] of Object.entries({'short title': {title: 'abc'}, 'no organizer': {organizer: ''}, 'short description': {description: 'too short'}, 'http link': {url: 'http://example.org/qa'}, 'end before start': {endsAt: new Date().toISOString()}, 'invalid date': {startsAt: 'tomorrow'}, 'long venue': {venue: 'v'.repeat(201)}, 'long phone': {contactPhone: '9'.repeat(31)}})) assert.equal((await api({action: 'save-activity', activity: {...activity, ...patch}})).r.status, 400, label);
+assert.equal((await api({action: 'save-activity', activity: {...activity, imageId: 'not-an-uploaded-image'}})).r.status, 403, 'unknown media id');
+assert.equal((await api({action: 'save-activity', activity: {...activity, imageId: residentPhoto}})).r.status, 403, 'a resident profile photo cannot be attached to an activity');
+const actSaved = await api({action: 'save-activity', activity}); assert.equal(actSaved.r.status, 200); const actId = actSaved.j.id; assert.ok(actId);
+const adminCopy = data.activities.find(a => a.id === actId); assert.equal(adminCopy.status, 'draft'); assert.equal(adminCopy.publishedAt, null); assert.equal(adminCopy.organizer, activity.organizer); assert.equal(adminCopy.imageId, actImage);
+await api(undefined, token); assert.ok(!data.activities.some(a => a.id === actId), 'a draft is invisible to residents'); assert.equal(JSON.stringify(data).includes(activity.title), false);
+assert.equal((await mediaOf(actImage, token)).status, 404, 'the image of a draft activity is hidden from residents'); assert.equal((await mediaOf(actImage)).status, 200, 'admins with activities.manage can preview it');
+const actPublished = await api({action: 'publish-activity', id: actId, status: 'published'}); assert.equal(actPublished.r.status, 200); assert.equal(actPublished.j.notificationCreated, true);
+assert.ok(data.activities.find(a => a.id === actId).publishedAt);
+await api(undefined, token); const visible = data.activities.find(a => a.id === actId); assert.ok(visible, 'published activities are visible'); assert.equal(visible.title, activity.title); assert.equal(visible.status, 'published');
+assert.ok(data.activities.every((a, i, all) => !i || +new Date(all[i - 1].startsAt) <= +new Date(a.startsAt)), 'sorted by startsAt ascending');
+const imageRead = await mediaOf(actImage, token); assert.equal(imageRead.status, 200, 'the image of a visible activity is readable'); assert.equal(imageRead.headers.get('content-type'), 'image/png');
+const actNotice = data.notifications.find(x => x.activityId === actId); assert.ok(actNotice); assert.equal(actNotice.kind, 'activity'); assert.equal(actNotice.read, false); assert.ok(actNotice.body.startsWith(activity.organizer));
+assert.equal(data.unread.activities, 1); assert.equal(data.unread.total, data.unread.complaints + data.unread.classifieds + data.unread.activities);
+// Opting out hides the notification and zeroes the count (the activity stays listed); opting in again restores it.
+assert.equal((await api({action: 'save-profile', profile: {activityNotifications: 'no'}}, token)).r.status, 400);
+assert.equal((await api({action: 'save-profile', profile: {activityNotifications: false}}, token)).r.status, 200); await api(undefined, token);
+assert.equal(data.profile.activityNotifications, false); assert.ok(!data.notifications.some(x => x.activityId === actId)); assert.equal(data.unread.activities, 0); assert.ok(data.activities.some(a => a.id === actId));
+assert.equal((await api({action: 'save-profile', profile: {activityNotifications: true}}, token)).r.status, 200); await api(undefined, token); assert.equal(data.unread.activities, 1); assert.ok(data.notifications.some(x => x.activityId === actId));
+assert.equal((await api({action: 'read-all-notifications', kind: 'activity'}, token)).r.status, 200); await api(undefined, token); assert.equal(data.unread.activities, 0); assert.equal(data.notifications.find(x => x.activityId === actId).read, true);
+assert.equal((await api({action: 'read-all-notifications', kind: 'event'}, token)).r.status, 400);
+// Republishing never notifies twice. Editing keeps a published activity published and visible (with its image); archiving hides it and its image.
+assert.equal((await api({action: 'publish-activity', id: actId, status: 'published'})).j.notificationCreated, false);
+const edited = await api({action: 'save-activity', activity: {...activity, id: actId, title: activity.title + ' (edited)'}}); assert.equal(edited.r.status, 200); assert.equal(edited.j.status, 'published'); await api(undefined, token); assert.equal(data.activities.find(a => a.id === actId)?.title, activity.title + ' (edited)', 'editing keeps it published and visible'); assert.equal((await mediaOf(actImage, token)).status, 200, 'its image stays readable');
+assert.equal((await api({action: 'publish-activity', id: actId, status: 'published'})).j.notificationCreated, false); await api(undefined, token); assert.ok(data.activities.some(a => a.id === actId)); assert.equal(data.notifications.filter(x => x.activityId === actId).length, 1);
+assert.equal((await api({action: 'publish-activity', id: actId, status: 'archived'})).r.status, 200); await api(undefined, token); assert.ok(!data.activities.some(a => a.id === actId), 'archived: hidden'); assert.ok(!data.notifications.some(x => x.activityId === actId)); assert.equal((await mediaOf(actImage, token)).status, 404);
+assert.equal((await api({action: 'publish-activity', id: actId, status: 'live'})).r.status, 400); assert.equal((await api({action: 'publish-activity', id: 'missing', status: 'published'})).r.status, 400);
+// An activity that has already ended cannot be published.
+const ended = await api({action: 'save-activity', activity: {...activity, title: activity.title + ' (ended)', imageId: '', startsAt: new Date(Date.now() - 2 * DAY).toISOString(), endsAt: new Date(Date.now() - DAY).toISOString()}}); assert.equal(ended.r.status, 200);
+const endedPublish = await api({action: 'publish-activity', id: ended.j.id, status: 'published'}); assert.equal(endedPublish.r.status, 400); assert.match(endedPublish.j.error, /update its dates/i);
+await api(undefined, token); assert.ok(!data.activities.some(a => a.id === ended.j.id)); await api({action: 'publish-activity', id: ended.j.id, status: 'archived'});
+// ---------------------------------------------------------------- editing keeps an ad published; hard deletes (ad, activity, place); Hindi twins
+const adEdit = await api({action: 'save-classified', classified: {...ad, id, title: ad.title + ' (edited)', advertiserHi: 'स्थानीय परीक्षण'}}); assert.equal(adEdit.r.status, 200); assert.equal(adEdit.j.status, 'published');
+await api(undefined, token); const editedAd = data.classifieds.find(a => a.id === id); assert.ok(editedAd, 'an edited published ad stays visible'); assert.equal(editedAd.title, ad.title + ' (edited)'); assert.equal(editedAd.advertiserHi, 'स्थानीय परीक्षण'); assert.equal(data.notifications.filter(x => x.classifiedId === id).length, 1, 'editing does not notify again');
+assert.equal((await api({action: 'save-classified', classified: {...ad, id, advertiserHi: 'x'.repeat(151)}})).r.status, 400);
+for (const action of ['delete-classified', 'delete-activity', 'delete-place', 'save-announcement', 'delete-announcement', 'save-app-config', 'save-teams']) assert.equal((await api({action}, token)).r.status, 403, action + ' as a resident');
+const uploadAdmin = async () => {const form = new FormData(); form.append('file', new Blob([png], {type: 'image/png'}), 'qa-delete.png'); return (await (await fetch(base + '/api/media', {method: 'POST', headers: {cookie}, body: form})).json()).id;};
+const delAdImage = await uploadAdmin(), delActImage = await uploadAdmin(), delPlaceImage = await uploadAdmin();
+const ad2 = await api({action: 'save-classified', classified: {...ad, title: ad.title + ' (to delete)', imageId: delAdImage}}); assert.equal(ad2.r.status, 200); assert.equal((await api({action: 'publish-classified', id: ad2.j.id, status: 'published'})).j.notificationCreated, true);
+const act2 = await api({action: 'save-activity', activity: {...activity, title: activity.title + ' (to delete)', imageId: delActImage}}); assert.equal(act2.r.status, 200); assert.equal((await api({action: 'publish-activity', id: act2.j.id, status: 'published'})).j.notificationCreated, true);
+const placeBody = {name: 'QA place ' + nonce, nameHi: 'परीक्षण स्थान', description: 'Synthetic place used to verify the city guide and deletion.', descriptionHi: '', address: 'QA road, Jaipur', addressHi: 'परीक्षण मार्ग, जयपुर', hours: '', hoursHi: '', imageId: delPlaceImage, mapUrl: '', sourceUrl: '', published: true, sortOrder: 99};
+const place = await api({action: 'save-place', place: placeBody}); assert.equal(place.r.status, 200);
+await api(undefined, token); assert.ok(data.classifieds.some(a => a.id === ad2.j.id) && data.activities.some(a => a.id === act2.j.id)); assert.equal(data.places.find(p => p.id === place.j.id)?.addressHi, 'परीक्षण मार्ग, जयपुर'); assert.ok(data.notifications.some(x => x.classifiedId === ad2.j.id) && data.notifications.some(x => x.activityId === act2.j.id));
+for (const image of [delAdImage, delActImage, delPlaceImage]) assert.equal((await mediaOf(image, token)).status, 200, 'readable while the content is visible');
+for (const [action, key] of [['delete-classified', ad2.j.id], ['delete-activity', act2.j.id], ['delete-place', place.j.id]]) {const deleted = await api({action, id: key}); assert.equal(deleted.r.status, 200, action); assert.equal(deleted.j.deleted, true); assert.equal((await api({action, id: key})).r.status, 400, action + ' twice'); assert.equal((await api({action})).r.status, 400, action + ' without an id');}
+await api(undefined, token); assert.ok(!data.classifieds.some(a => a.id === ad2.j.id) && !data.activities.some(a => a.id === act2.j.id) && !data.places.some(p => p.id === place.j.id), 'deleted content is gone'); assert.ok(!data.notifications.some(x => x.classifiedId === ad2.j.id || x.activityId === act2.j.id), 'and so are its notifications');
+for (const image of [delAdImage, delActImage, delPlaceImage]) assert.equal((await mediaOf(image, token)).status, 404, 'the image stays in storage but is no longer readable through deleted content');
+await api(); assert.ok(data.audit.some(a => /^Deleted classified: /.test(a.action)) && data.audit.some(a => /^Deleted activity: /.test(a.action)) && data.audit.some(a => /^Deleted place: /.test(a.action)), 'deletions are audited');
+// ---------------------------------------------------------------- ward updates (announcements): validation, Hindi, priority, expiry, archive, delete
+const notice = {title: 'QA ward update ' + nonce, titleHi: 'परीक्षण वार्ड अपडेट', body: 'Synthetic ward update used to verify publishing, Hindi text, expiry and deletion.', bodyHi: 'परीक्षण सूचना, हटाने की जाँच के लिए।', priority: 'Important', endsAt: new Date(Date.now() + 3600000).toISOString(), status: 'published'};
+for (const [label, patch] of Object.entries({'short title': {title: 'abc'}, 'short notice': {body: 'too short'}, 'bad priority': {priority: 'Urgent'}, 'bad status': {status: 'draft'}, 'bad end date': {endsAt: 'tomorrow'}, 'published but ended': {endsAt: new Date(Date.now() - 1000).toISOString()}, 'long Hindi title': {titleHi: 'x'.repeat(121)}})) assert.equal((await api({action: 'save-announcement', announcement: {...notice, ...patch}})).r.status, 400, label);
+assert.equal((await api({action: 'save-announcement', announcement: {...notice, id: 'missing'}})).r.status, 400, 'unknown id');
+const noticeSaved = await api({action: 'save-announcement', announcement: notice}); assert.equal(noticeSaved.r.status, 200); const noticeId = noticeSaved.j.id; assert.ok(noticeId);
+await api(undefined, token); const seen = data.announcements.find(a => a.id === noticeId); assert.ok(seen, 'a published notice is visible to residents'); assert.deepEqual([seen.title, seen.titleHi, seen.bodyHi, seen.priority, seen.status, seen.endsAt], [notice.title, notice.titleHi, notice.bodyHi, 'Important', 'published', notice.endsAt]); assert.equal(data.announcements[0].id, noticeId, 'newest first');
+const createdAt = seen.at; assert.equal((await api({action: 'save-announcement', announcement: {...notice, id: noticeId, priority: 'Emergency', endsAt: ''}})).r.status, 200); await api(undefined, token); const changed = data.announcements.find(a => a.id === noticeId); assert.deepEqual([changed.priority, changed.at, 'endsAt' in changed], ['Emergency', createdAt, false], 'editing keeps the creation time and clears the end time');
+assert.equal((await api({action: 'save-announcement', announcement: {...notice, id: noticeId, status: 'archived', endsAt: ''}})).r.status, 200); await api(undefined, token); assert.ok(!data.announcements.some(a => a.id === noticeId), 'archived notices are hidden from residents');
+await api(); assert.equal(data.announcements.find(a => a.id === noticeId)?.status, 'archived', 'administrators still see them');
+assert.equal((await api({action: 'save-announcement', announcement: {...notice, id: noticeId, endsAt: ''}})).r.status, 200); await api(undefined, token); assert.ok(data.announcements.some(a => a.id === noticeId), 'published again');
+const pastNotice = await api({action: 'save-announcement', announcement: {...notice, title: notice.title + ' (finished)', status: 'archived', endsAt: new Date(Date.now() - 3600000).toISOString()}}); assert.equal(pastNotice.r.status, 200); await api(undefined, token); assert.ok(!data.announcements.some(a => a.id === pastNotice.j.id));
+for (const key of [noticeId, pastNotice.j.id]) {assert.equal((await api({action: 'delete-announcement', id: key})).r.status, 200); assert.equal((await api({action: 'delete-announcement', id: key})).r.status, 400, 'a second delete is refused');}
+await api(); assert.ok(!data.announcements.some(a => a.id === noticeId || a.id === pastNotice.j.id)); assert.ok(data.audit.some(a => a.action.startsWith('Deleted ward notice: ')));
+assert.equal((await api({action: 'announcement', title: 'QA legacy notice ' + nonce, body: 'The original create-only action still works.'})).r.status, 200); const legacy = data.announcements.find(a => a.title === 'QA legacy notice ' + nonce); assert.ok(legacy); assert.deepEqual([legacy.status, legacy.priority, legacy.titleHi], ['published', 'Service notice', '']); assert.equal((await api({action: 'delete-announcement', id: legacy.id})).r.status, 200);
+// ---------------------------------------------------------------- app configuration, ward / city labels and the public GET /api/app-config (the original values are restored afterwards)
+await api(); const originalConfig = data.settings.appConfig, originalSettings = {...data.settings}; assert.ok(originalConfig?.tabs && originalConfig.tiles && originalConfig.support && originalConfig.maintenance && originalConfig.orgLabel);
+const clone = value => JSON.parse(JSON.stringify(value));
+try {
+ const badConfigs = {'http terms link': {termsUrl: 'http://example.org/terms'}, 'credentials in link': {privacyUrl: 'https://user:secret@example.org'}, 'spaces in link': {termsUrl: 'https://exa mple.org'}, 'long phone': {support: {...originalConfig.support, phone: '1'.repeat(31)}}, 'letters in phone': {support: {...originalConfig.support, phone: 'call me'}}, 'bad email': {support: {...originalConfig.support, email: 'not-an-email'}}, 'long message': {maintenance: {...originalConfig.maintenance, messageEn: 'm'.repeat(301)}}, 'maintenance without a message': {maintenance: {enabled: true, messageEn: '', messageHi: ''}}, 'bad version': {minAppVersion: '1.2'}, 'text version': {minAppVersion: 'latest'}, 'tab flag not boolean': {tabs: {...originalConfig.tabs, city: 'yes'}}, 'tile flag missing': {tiles: {classifieds: true, activities: true, city: true}}, 'no tabs': {tabs: undefined}, 'empty organisation': {orgLabel: {en: '', hi: ''}}};
+ for (const [label, patch] of Object.entries(badConfigs)) assert.equal((await api({action: 'save-app-config', appConfig: {...clone(originalConfig), ...patch}})).r.status, 400, label);
+ assert.equal((await api({action: 'save-app-config', appConfig: 'nope'})).r.status, 400); assert.equal((await api({action: 'save-app-config'})).r.status, 400);
+ await api(); assert.deepEqual(data.settings.appConfig, originalConfig, 'rejected saves change nothing');
+ const next = {...clone(originalConfig), termsUrl: 'https://example.org/qa-terms-' + nonce, support: {...originalConfig.support, hoursEn: 'QA hours ' + nonce, hoursHi: 'परीक्षण समय'}, evil: 'dropped'};
+ assert.equal((await api({action: 'save-app-config', appConfig: next})).r.status, 200); const {evil, ...expected} = next; assert.deepEqual(data.settings.appConfig, expected);
+ await api(undefined, token); assert.deepEqual(data.settings.appConfig, expected, 'residents receive the saved configuration'); assert.equal('teams' in data.settings, false);
+ // The legacy ward and city labels and the contact line start empty (no ward is assumed) and travel with the settings action, which still requires slaHours; an empty string clears a value, a missing one keeps it.
+ const labels = {action: 'settings', contact: originalSettings.contact, slaHours: originalSettings.slaHours}, qaLabels = {ward: 'QA ward ' + nonce, city: 'QA city ' + nonce};
+ assert.equal((await api({...labels, ward: 'W'})).r.status, 400); assert.equal((await api({...labels, contact: 'abc'})).r.status, 400); assert.equal((await api({...labels, ...qaLabels})).r.status, 200);
+ await api(); assert.deepEqual([data.settings.ward, data.settings.city, data.settings.slaHours], [qaLabels.ward, qaLabels.city, originalSettings.slaHours]);
+ assert.equal((await api({action: 'settings', slaHours: originalSettings.slaHours})).r.status, 200); await api(); assert.deepEqual([data.settings.ward, data.settings.city, data.settings.contact], [qaLabels.ward, qaLabels.city, originalSettings.contact], 'omitted values are kept');
+ // Public, unauthenticated, short-lived cache; configuration only.
+ const publicRes = await fetch(base + '/api/app-config'); assert.equal(publicRes.status, 200); assert.match(publicRes.headers.get('cache-control') ?? '', /max-age=\d+/); const publicText = await publicRes.text(); const pub = JSON.parse(publicText);
+ assert.deepEqual(Object.keys(pub).sort(), ['appConfig', 'city', 'contact', 'ward']); assert.deepEqual(pub.appConfig, expected); assert.deepEqual([pub.ward, pub.city], [qaLabels.ward, qaLabels.city]);
+ for (const secret of ['residentProfiles', 'complaints', 'splashImageId', 'brandingBanners', 'slaHours', 'teams', 'audit']) assert.equal(publicText.includes(secret), false, 'the public payload must not contain ' + secret);
+ assert.equal((await fetch(base + '/api/app-config', {headers: {Authorization: 'Bearer not-a-real-token'}})).status, 200, 'it never needs, or rejects, credentials');
+} finally {
+ await api({action: 'settings', contact: originalSettings.contact, slaHours: originalSettings.slaHours, ward: originalSettings.ward, city: originalSettings.city});
+ const restored = await api({action: 'save-app-config', appConfig: originalConfig}); assert.equal(restored.r.status, 200);
+}
+await api(); assert.deepEqual([data.settings.appConfig, data.settings.ward, data.settings.city], [originalConfig, originalSettings.ward, originalSettings.city], 'the local configuration is restored');
+const grant = await api({action: 'save-admin', admin: {email: `qa-${nonce}@example.invalid`, role: 'Auditor', permissions: [], active: false}}); assert.equal(grant.r.status, 200); assert.ok(grant.j.admins.some(a => a.email === `qa-${nonce}@example.invalid` && !a.active));
+const adminList = await fetch(base + '/api/workspace?section=admins', {headers: {Authorization: `Bearer ${token}`}}); assert.equal(adminList.status, 403);
+assert.equal((await api({action: 'save-admin', admin: {email: 'invalid', role: 'Super Admin', active: true}})).r.status, 400);
+assert.equal((await api({action: 'delete-classified', id})).r.status, 200); assert.equal((await api({action: 'delete-activity', id: actId})).r.status, 200); assert.equal((await api({action: 'delete-activity', id: ended.j.id})).r.status, 200); await api({action: 'save-category', category: {...category, id: categoryId, enabled: false}});
+const logout = await fetch(base + '/api/logout', {method: 'POST', headers: {Authorization: `Bearer ${token}`}}); assert.equal(logout.status, 200); assert.equal((await api(undefined, token)).r.status, 401);
+console.log('PASS: server-driven categories, OTP-registered resident, resident permissions, draft visibility, ad publish → notification → read, duplicate suppression, activity draft → publish → resident-visible (image, sorting, notification, opt-out/opt-in, unread) → archive, ended-activity rejection, admin grant validation, access-list privacy, logout token revocation. Edits keep published content published, hard deletes remove records, notifications and image access, ward updates (Hindi, priority, expiry, archive, delete), app configuration with validation and the public GET /api/app-config, ward and city labels. QA ads/activities/places/notices are deleted, configuration restored; QA categories are disabled and the QA admin stays disabled.');

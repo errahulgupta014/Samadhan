@@ -8,9 +8,17 @@ export function validateAdminGrant(viewer:Viewer,ownerEmail:string,input:any){
  if(!Object.prototype.hasOwnProperty.call(rolePresets,input.role)||typeof input.active!=='boolean')throw new ServiceError('Select a role and access status.');
  if(email===ownerEmail)throw new ServiceError('The founding Super Admin cannot be disabled or downgraded.');
  if(email===viewer.email)throw new ServiceError('Another Super Admin must change your own access.');
- const allowed:Permission[]=input.role==='Custom'?input.permissions:[...rolePresets[input.role as AdminRole]];
+ return {email,role:input.role as AdminRole,permissions:grantedPermissions(input.role,input.permissions),active:input.active as boolean};
+}
+/**
+ * The permission list a role may be given: a preset's own list, or the explicit list for 'Custom'. Shared by the legacy email grants above and the
+ * administrator accounts (lib/admin-policy.ts). `admins.manage` belongs to Super Admin only, and managing complaints needs reading them.
+ */
+export function grantedPermissions(role:unknown,requested:unknown):Permission[]{
+ if(typeof role!=='string'||!Object.prototype.hasOwnProperty.call(rolePresets,role))throw new ServiceError('Select a role and access status.');
+ const allowed:Permission[]=role==='Custom'?requested as Permission[]:[...rolePresets[role as AdminRole]];
  if(!Array.isArray(allowed)||allowed.some(p=>!permissions.includes(p)))throw new ServiceError('Invalid permissions.');
- if(input.role!=='Super Admin'&&allowed.includes('admins.manage'))throw new ServiceError('Access management is reserved for Super Admins.');
+ if(role!=='Super Admin'&&allowed.includes('admins.manage'))throw new ServiceError('Access management is reserved for Super Admins.');
  if(allowed.includes('complaints.manage')&&!allowed.includes('complaints.read'))throw new ServiceError('Managing complaints also requires permission to read them.');
- return {email,role:input.role as AdminRole,permissions:[...new Set(allowed)],active:input.active as boolean};
+ return [...new Set(allowed)];
 }

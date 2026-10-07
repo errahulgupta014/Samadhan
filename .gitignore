@@ -49,3 +49,8 @@ next-env.d.ts
 *.tsbuildinfo
 
 /tests/.community/
+/tests/.admin/
+/tests/.residents/
+/tests/.departments/
+/tests/.closure/
+/tests/.catdept/

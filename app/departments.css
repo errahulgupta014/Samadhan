@@ -1,0 +1,4 @@
+/* Departments page and the department line in the complaint detail (app/departments-manager.tsx). The table, buttons and popups share app/record-tables.css. */
+.departments .dept-warning{background:#fff6e8;color:#8a5a14;border:1px solid #f1dcb7}
+.departments .phone,.dept-contact-line .phone{font-variant-numeric:tabular-nums;white-space:nowrap}
+.dept-contact-line{margin:-4px 0 14px;padding:10px 12px;border-radius:8px;background:#f4f7f5;line-height:1.7}

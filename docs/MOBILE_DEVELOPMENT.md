@@ -17,7 +17,7 @@ npm run dev
 
 Open the URL printed by the web server. The root goes to the citizen app. The supporting admin portal is `/admin`.
 
-For a fresh local browser, visit `/signin-with-chatgpt?return_to=/mobile-app/index.html` once to establish the starter's loopback-only mock workspace identity. This is separate from the citizen's simulated phone sign-in. It is never real resident authentication.
+For a fresh local browser, visit `/signin-with-chatgpt?return_to=/app/` once to establish the starter's loopback-only mock workspace identity. This is separate from the citizen's simulated phone sign-in. It is never real resident authentication.
 
 For a new checkout, build once (`npm run build`), then apply the generated local migration:
 

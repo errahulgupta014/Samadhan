@@ -1,2 +1,2 @@
 import {Redirect} from 'expo-router';
-export default function LegacyPreview(){return <Redirect href="/"/>;}
+export default function LegacyIndexRedirect(){return <Redirect href="/"/>;}
