@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SAMADHAN — Your voice. Our responsibility.</title>
+<meta name="description" content="SAMADHAN helps residents report civic problems in their ward with a photo and location, follow every update, and helps ward offices resolve them faster. Available in English and Hindi.">
+<meta name="theme-color" content="#193753">
+<link rel="icon" type="image/png" href="/favicon.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:title" content="SAMADHAN — Your voice. Our responsibility.">
+<meta property="og:description" content="Report civic problems in your ward, follow every update, and see them resolved.">
+<meta property="og:type" content="website">
+<meta property="og:image" content="/logo.png">
+<style>
+:root{--navy:#193753;--navy-deep:#10263b;--green:#12754f;--saffron:#ff9933;--saffron-soft:#fff0dc;--paper:#fffefa;--ink:#14283d;--muted:#4b5b66;--line:#e1e8ee;--radius:18px}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:"Segoe UI","Nirmala UI",system-ui,-apple-system,Roboto,"Helvetica Neue",Arial,sans-serif;color:var(--ink);background:var(--paper);line-height:1.6;-webkit-font-smoothing:antialiased}
+img{max-width:100%;display:block}
+a{color:var(--green)}
+.skip{position:absolute;left:-999px;top:8px;background:var(--navy);color:#fff;padding:10px 14px;border-radius:8px;z-index:20}
+.skip:focus{left:8px}
+:focus-visible{outline:3px solid var(--saffron);outline-offset:3px;border-radius:6px}
+.band{height:6px;background:linear-gradient(90deg,#ff9933 0 33.3%,#fff 33.3% 66.6%,#138808 66.6% 100%);box-shadow:0 1px 3px rgba(25,55,83,.2)}
+.wrap{width:min(1120px,100% - 40px);margin-inline:auto}
+header.top{position:sticky;top:0;z-index:10;background:rgba(255,254,250,.92);backdrop-filter:saturate(1.4) blur(10px);border-bottom:1px solid var(--line)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:10px 0}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none;color:var(--navy)}
+.brand img{width:46px;height:46px;border-radius:12px}
+.brand b{display:block;font-size:1.15rem;letter-spacing:.16em;line-height:1.1}
+.brand small{display:block;font-size:.78rem;color:var(--muted);letter-spacing:0}
+.links{display:flex;align-items:center;gap:22px}
+.links a.plain{color:var(--navy);text-decoration:none;font-weight:600;font-size:.95rem}
+.links a.plain:hover{color:var(--green)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 22px;border-radius:14px;font-weight:700;text-decoration:none;font-size:1rem;border:2px solid transparent;transition:transform .15s,box-shadow .15s}
+.btn.primary{background:var(--saffron);color:var(--ink);box-shadow:0 4px 0 #d9741a,0 10px 22px rgba(217,116,26,.25)}
+.btn.primary:hover{transform:translateY(-1px)}
+.btn.ghost{background:#fff;color:var(--navy);border-color:var(--line);box-shadow:0 2px 0 var(--line)}
+.btn.ghost:hover{border-color:var(--navy)}
+.hero{position:relative;overflow:hidden;background:radial-gradient(1200px 500px at 85% -10%,var(--saffron-soft),transparent 60%),linear-gradient(180deg,#f6faf7,var(--paper))}
+.hero .wrap{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding:72px 0 84px;position:relative}
+.eyebrow{display:inline-block;font-size:.8rem;font-weight:700;letter-spacing:.14em;color:var(--green);background:#e4f3ea;padding:6px 14px;border-radius:999px}
+h1{font-size:clamp(2.2rem,5vw,3.6rem);line-height:1.08;margin:18px 0 14px;color:var(--navy);letter-spacing:-.02em}
+h1 span{color:var(--green)}
+.lead{font-size:1.15rem;color:var(--muted);max-width:34em}
+.hindi{font-size:1.1rem;color:var(--navy);font-weight:600;margin:10px 0 0}
+.cta{display:flex;flex-wrap:wrap;gap:14px;margin-top:30px}
+.note{font-size:.88rem;color:var(--muted);margin-top:14px}
+.card-visual{background:#fff;border:1px solid var(--line);border-radius:26px;padding:26px;box-shadow:0 24px 60px rgba(25,55,83,.14)}
+.card-visual h2{font-size:.85rem;letter-spacing:.14em;color:#b86a14;margin:0 0 4px}
+.card-visual .ref{font-size:.9rem;color:var(--muted);margin:0 0 14px}
+.card-visual strong.t{display:block;font-size:1.2rem;color:var(--navy);margin-bottom:18px}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.steps li{display:flex;gap:12px;align-items:center;padding:10px 14px;border-radius:12px;background:#f4f8f6;font-weight:600;color:var(--navy)}
+.steps li i{width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-size:.8rem;color:#fff;background:#6c8480;flex:none}
+.steps li.done i{background:var(--green)}
+.steps li.now{background:var(--saffron-soft)}
+.steps li.now i{background:var(--saffron);color:var(--ink)}
+section{padding:76px 0}
+section.alt{background:#f4f8f6}
+.head{max-width:40em;margin-bottom:38px}
+.head h2{font-size:clamp(1.7rem,3.2vw,2.4rem);color:var(--navy);margin:10px 0 8px;letter-spacing:-.01em;line-height:1.15}
+.head p{color:var(--muted);margin:0;font-size:1.05rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.grid2{display:grid;grid-template-columns:repeat(2,1fr);gap:22px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:0 3px 0 var(--line)}
+.card h3{margin:14px 0 6px;font-size:1.15rem;color:var(--navy)}
+.card p{margin:0;color:var(--muted)}
+.ic{width:48px;height:48px;border-radius:14px;display:grid;place-items:center;font-size:1.4rem;background:var(--saffron-soft)}
+.ic.g{background:#e4f3ea}.ic.n{background:#e3ecf5}
+.num{width:42px;height:42px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-weight:800}
+.band-cta{position:relative;overflow:hidden;background:linear-gradient(135deg,var(--navy),var(--navy-deep));color:#fff;text-align:center;padding:72px 0}
+.band-cta h2{font-size:clamp(1.7rem,3.4vw,2.5rem);margin:0 0 10px}
+.band-cta p{color:#c9d6e4;margin:0 auto 26px;max-width:36em}
+.band-cta .cta{justify-content:center}
+.band-cta .btn.ghost{background:transparent;color:#fff;border-color:rgba(255,255,255,.4);box-shadow:none}
+.band-cta .btn.ghost:hover{border-color:#fff}
+footer{background:var(--paper);border-top:1px solid var(--line);padding:34px 0;color:var(--muted);font-size:.92rem}
+footer .wrap{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:center;justify-content:space-between}
+.chakra{position:absolute;right:-90px;top:-70px;width:340px;opacity:.07;color:var(--navy);pointer-events:none}
+.chakra.l{left:-110px;right:auto;top:auto;bottom:-120px;color:#fff;opacity:.07}
+@media(max-width:900px){.hero .wrap{grid-template-columns:1fr;padding:48px 0 56px;gap:34px}.grid3{grid-template-columns:1fr 1fr}.links a.plain{display:none}}
+@media(max-width:600px){.grid3,.grid2{grid-template-columns:1fr}section{padding:56px 0}.cta .btn{width:100%}.brand small{display:none}.nav .btn{width:auto;min-height:42px;padding:0 16px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.btn{transition:none}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<div class="band" aria-hidden="true"></div>
+<header class="top">
+ <div class="wrap nav">
+  <a class="brand" href="/" aria-label="SAMADHAN home"><img src="/logo.png" alt="" width="46" height="46"><span><b>SAMADHAN</b><small>जनता की बात, समाधान के साथ</small></span></a>
+  <nav class="links" aria-label="Main">
+   <a class="plain" href="#how">How it works</a>
+   <a class="plain" href="#residents">For residents</a>
+   <a class="plain" href="#offices">For ward offices</a>
+   <a class="plain" href="#contact">Contact</a>
+   <a class="btn primary" href="https://test.smadhan.com/app/">Open the test app</a>
+  </nav>
+ </div>
+</header>
+<main id="main">
+ <div class="hero">
+  <svg class="chakra" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="50" cy="50" r="46"/><circle cx="50" cy="50" r="8"/><g id="spoke"><line x1="50" y1="42" x2="50" y2="6"/></g><use href="#spoke" transform="rotate(15 50 50)"/><use href="#spoke" transform="rotate(30 50 50)"/><use href="#spoke" transform="rotate(45 50 50)"/><use href="#spoke" transform="rotate(60 50 50)"/><use href="#spoke" transform="rotate(75 50 50)"/><use href="#spoke" transform="rotate(90 50 50)"/><use href="#spoke" transform="rotate(105 50 50)"/><use href="#spoke" transform="rotate(120 50 50)"/><use href="#spoke" transform="rotate(135 50 50)"/><use href="#spoke" transform="rotate(150 50 50)"/><use href="#spoke" transform="rotate(165 50 50)"/><use href="#spoke" transform="rotate(180 50 50)"/><use href="#spoke" transform="rotate(195 50 50)"/><use href="#spoke" transform="rotate(210 50 50)"/><use href="#spoke" transform="rotate(225 50 50)"/><use href="#spoke" transform="rotate(240 50 50)"/><use href="#spoke" transform="rotate(255 50 50)"/><use href="#spoke" transform="rotate(270 50 50)"/><use href="#spoke" transform="rotate(285 50 50)"/><use href="#spoke" transform="rotate(300 50 50)"/><use href="#spoke" transform="rotate(315 50 50)"/><use href="#spoke" transform="rotate(330 50 50)"/><use href="#spoke" transform="rotate(345 50 50)"/></svg>
+  <div class="wrap">
+   <div>
+    <span class="eyebrow">CIVIC SERVICES · ENGLISH &amp; हिन्दी</span>
+    <h1>Your voice.<br><span>Our responsibility.</span></h1>
+    <p class="lead">Report a problem in your ward with a photo and its location, follow every update, and confirm when it is fixed. SAMADHAN connects residents and ward offices on one clear, accountable record.</p>
+    <p class="hindi">जनता की बात, समाधान के साथ</p>
+    <div class="cta">
+     <a class="btn primary" href="https://test.smadhan.com/app/">Open the test app</a>
+     <a class="btn ghost" href="https://test.smadhan.com/">Administrator sign-in</a>
+    </div>
+    <p class="note">The test version is for review. It works in any phone browser and can be added to the home screen.</p>
+   </div>
+   <div class="card-visual" aria-label="Example of a complaint's progress">
+    <h2>EXAMPLE COMPLAINT</h2>
+    <p class="ref">Reference JSS/26/W12/1</p>
+    <strong class="t">Streetlight not working near the park</strong>
+    <ol class="steps">
+     <li class="done"><i>✓</i>Reported with photo and location</li>
+     <li class="done"><i>✓</i>Acknowledged by the ward office</li>
+     <li class="done"><i>✓</i>Assigned to the Electrical team</li>
+     <li class="now"><i>4</i>Work in progress</li>
+     <li><i>5</i>Resolved after you confirm</li>
+    </ol>
+   </div>
+  </div>
+ </div>
+
+ <section id="how" class="alt">
+  <div class="wrap">
+   <div class="head"><span class="eyebrow">HOW IT WORKS</span><h2>From a problem to a resolution, in three steps</h2><p>Every complaint gets a number, an owner and a visible history.</p></div>
+   <div class="grid3">
+    <div class="card"><div class="num">1</div><h3>Report</h3><p>Choose the department and category, add a photo, confirm the location and submit. It takes about a minute.</p></div>
+    <div class="card"><div class="num">2</div><h3>Track</h3><p>The complaint is routed to the right department. Residents see each status change and receive updates in the app.</p></div>
+    <div class="card"><div class="num">3</div><h3>Resolve</h3><p>When the work is done, a one-time code confirms the resolution before the complaint is closed.</p></div>
+   </div>
+  </div>
+ </section>
+
+ <section id="residents">
+  <div class="wrap">
+   <div class="head"><span class="eyebrow">FOR RESIDENTS</span><h2>Everything for your ward, in one app</h2><p>Simple to use, in English and हिन्दी.</p></div>
+   <div class="grid3">
+    <div class="card"><div class="ic" aria-hidden="true">📷</div><h3>Photo and location</h3><p>Show exactly what and where, so the right team can act the first time.</p></div>
+    <div class="card"><div class="ic g" aria-hidden="true">🔔</div><h3>Notifications that matter</h3><p>Complaint updates, plus classifieds and local activities if you want them. You choose.</p></div>
+    <div class="card"><div class="ic n" aria-hidden="true">🏛️</div><h3>Know your ward</h3><p>Your ward and ward member, ward notices, local places and activities from the Panchayat Samiti and Nagar Parishad.</p></div>
+    <div class="card"><div class="ic" aria-hidden="true">🌐</div><h3>English and हिन्दी</h3><p>Switch language any time. Labels, notices and updates follow your choice.</p></div>
+    <div class="card"><div class="ic g" aria-hidden="true">🔒</div><h3>Sign in with your mobile</h3><p>Log in with a one-time code. Your details stay private and only your ward office can see them.</p></div>
+    <div class="card"><div class="ic n" aria-hidden="true">📱</div><h3>Works on any phone</h3><p>Open it in the browser and add it to your home screen. No store download needed for the test version.</p></div>
+   </div>
+  </div>
+ </section>
+
+ <section id="offices" class="alt">
+  <div class="wrap">
+   <div class="head"><span class="eyebrow">FOR WARD OFFICES</span><h2>A portal built for accountable service</h2><p>Give every complaint an owner, and every decision a record.</p></div>
+   <div class="grid2">
+    <div class="card"><h3>Dashboards and reports</h3><p>Filter by date, ward, department, category and status. Generate reports and export them to CSV, Excel, PDF or JSON.</p></div>
+    <div class="card"><h3>Departments and categories</h3><p>Each category belongs to a department, so new complaints reach the right contact person automatically.</p></div>
+    <div class="card"><h3>Content you control</h3><p>Publish notices, classifieds, activities and city information from one place, with banners and app settings.</p></div>
+    <div class="card"><h3>Roles and permissions</h3><p>Create admin users with exactly the access they need. Only a Super Admin can delete records, and every delete asks first.</p></div>
+   </div>
+  </div>
+ </section>
+
+ <div class="band-cta">
+  <svg class="chakra l" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><circle cx="50" cy="50" r="46"/><circle cx="50" cy="50" r="8"/><circle cx="50" cy="50" r="28"/></svg>
+  <div class="wrap">
+   <h2>See it for yourself</h2>
+   <p>Open the test version on your phone, register with a mobile number and report a problem, or explore the administrator portal.</p>
+   <div class="cta">
+    <a class="btn primary" href="https://test.smadhan.com/app/">Open the test app</a>
+    <a class="btn ghost" href="https://test.smadhan.com/">Administrator sign-in</a>
+   </div>
+  </div>
+ </div>
+
+ <section id="contact">
+  <div class="wrap">
+   <div class="head"><span class="eyebrow">CONTACT</span><h2>Talk to us</h2><p>Questions, feedback or want to bring SAMADHAN to your ward? Write to <a href="mailto:contact@smadhan.com">contact@smadhan.com</a>.</p></div>
+  </div>
+ </section>
+</main>
+<footer>
+ <div class="wrap">
+  <span>© <span id="y">2026</span> SAMADHAN. All rights reserved.</span>
+  <span>जनता की बात, समाधान के साथ</span>
+ </div>
+</footer>
+<script>document.getElementById('y').textContent=new Date().getFullYear();</script>
+</body>
+</html>

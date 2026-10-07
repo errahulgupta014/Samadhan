@@ -1,0 +1,109 @@
+/* Administrator sign-in, account menu, default-password warning and the Users page (app/admin-login.tsx, app/admin-users-manager.tsx). */
+.admin-gate{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:30px;text-align:center;color:#526d7c}
+.admin-gate img{width:120px}
+.admin-gate p{display:flex;align-items:center;gap:8px}
+.spin{animation:admin-spin 1s linear infinite}
+@keyframes admin-spin{to{transform:rotate(360deg)}}
+.admin-login{min-height:100vh;display:grid;place-items:center;padding:24px 16px;background:linear-gradient(160deg,#f8f8f4 0%,#fff0dc 100%)}
+.admin-card{width:100%;max-width:420px;background:#fff;border:1px solid #e7e8df;border-radius:18px;padding:34px 30px 28px;box-shadow:0 18px 50px rgba(23,45,79,.12)}
+.admin-logo{display:block;width:96px;margin:0 auto 14px}
+.admin-card h1{font-size:22px;font-weight:700;text-align:center;color:#172d4f}
+.admin-sub{text-align:center;color:#6b7f8d;font-size:13px;margin:6px 0 22px;line-height:1.6}
+.admin-notice{background:#edf5f1;color:#2f6a4f;border-radius:8px;padding:10px 12px;font-size:13px;margin-bottom:16px;text-align:center}
+.admin-field{display:flex;flex-direction:column;gap:7px;margin-bottom:16px}
+.admin-field label{font-size:13px;font-weight:600;color:#3d566a}
+.admin-field small{font-size:12px;color:#7a8a96;line-height:1.5}
+.admin-field input{width:100%;border:1px solid #cfdae1;border-radius:9px;padding:12px 13px;font:inherit;font-size:15px;background:#fff;color:#172d4f}
+.admin-field input:focus{outline:2px solid #f3a24c;outline-offset:1px;border-color:#f3a24c}
+.admin-password{position:relative}
+.admin-password input{padding-right:46px}
+.admin-eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;border-radius:8px;color:#5b7384}
+.admin-eye:hover{background:#f1f5f7}
+.admin-error{background:#fff0ee;color:#a93e30;border:1px solid #f2d3cc;border-radius:8px;padding:11px 13px;font-size:13px;line-height:1.55;margin-bottom:16px}
+.admin-submit{width:100%;padding:13px 15px;font-size:14px}
+.admin-submit:disabled,.admin-actions .button:disabled{opacity:.6;cursor:not-allowed}
+.admin-foot{margin-top:20px;text-align:center;font-size:12px;color:#8393a0;line-height:1.6}
+.admin-actions{display:flex;flex-wrap:wrap;gap:10px}
+.admin-actions .button{font-size:13px}
+.admin-dialog{max-width:440px}
+.admin-flash{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:80;background:#172d4f;color:#fff;border-radius:10px;padding:12px 18px;font-size:13px;box-shadow:0 10px 30px rgba(23,45,79,.3);max-width:calc(100% - 32px)}
+/* top-bar account menu */
+.user-menu{position:relative}
+.user-menu-trigger{display:flex;align-items:center;gap:9px;padding:4px 8px 4px 4px;border-radius:999px;border:1px solid #e3e9ed;background:#fff;color:#172d4f}
+.user-menu-trigger:hover{background:#f6f8fa}
+.user-menu-text{display:flex;flex-direction:column;text-align:left;line-height:1.25}
+.user-menu-text b{font-size:12.5px;font-weight:600;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.user-menu-text small{font-size:11px;color:#7b8c98}
+.user-menu-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:60;min-width:230px;background:#fff;border:1px solid #e1e8ed;border-radius:12px;padding:6px;box-shadow:0 14px 34px rgba(23,45,79,.18)}
+.user-menu-head{display:flex;flex-direction:column;padding:10px 12px 12px;border-bottom:1px solid #eef2f4;margin-bottom:4px}
+.user-menu-head b{font-size:13px}
+.user-menu-head small{font-size:12px;color:#7b8c98;margin-top:2px}
+.user-menu-panel button[role=menuitem]{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:8px;font-size:13px;color:#172d4f;text-align:left}
+.user-menu-panel button[role=menuitem]:hover,.user-menu-panel button[role=menuitem]:focus-visible{background:#fff4e6;outline:none}
+@media(max-width:700px){.user-menu-text{display:none}.user-menu-trigger{padding:3px 6px 3px 3px}}
+/* default password warning */
+.default-password-banner{display:flex;align-items:center;gap:16px;background:#fff1e3;border:1px solid #f0b27a;border-left:6px solid #d9480f;color:#6b2d0a;border-radius:12px;padding:15px 18px;margin-bottom:20px}
+.default-password-banner svg{flex:none;color:#d9480f}
+.default-password-banner div{flex:1;min-width:0}
+.default-password-banner b{display:block;font-size:14px}
+.default-password-banner p{font-size:13px;margin-top:3px;line-height:1.5}
+.default-password-banner .button{flex:none;background:#d9480f;border-color:#d9480f;color:#fff}
+.default-password-banner .button:hover{background:#b83c0b}
+@media(max-width:700px){.default-password-banner{flex-wrap:wrap}.default-password-banner .button{width:100%}}
+/* Users page */
+.users-page{display:flex;flex-direction:column;gap:20px}
+.users-note{background:#edf5f1;color:#3b6b55;border-radius:10px;padding:12px 15px;font-size:13px;line-height:1.6}
+.users-table-wrap{overflow-x:auto}
+.users-table-wrap table{min-width:760px}
+.user-name{display:flex;flex-direction:column;gap:2px}
+.user-name b{font-size:13.5px}
+.user-name small{color:#7b8c98;font-size:12px}
+.user-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.user-chip{display:inline-block;border-radius:999px;padding:2px 9px;font-size:11px;font-weight:600;background:#eef2f4;color:#52687a;white-space:nowrap}
+.user-chip.good{background:#e1f2e8;color:#1f6b45}
+.user-chip.off{background:#f3f4f6;color:#6b7280}
+.user-chip.warn{background:#fff1e3;color:#b4540a}
+.user-chip.you{background:#e8eefb;color:#2c4a8a}
+.user-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.user-actions button{border:1px solid #dce5e7;border-radius:7px;padding:6px 10px;font-size:12px;font-weight:600;background:#fff;color:#172d4f}
+.user-actions button:hover:not(:disabled){background:#f6f8fa}
+.user-actions button:disabled{opacity:.45;cursor:not-allowed}
+.user-actions button.danger{color:#a93e30;border-color:#f0cbc5}
+.user-actions button.danger:hover:not(:disabled){background:#fff0ee}
+.user-dialog{max-width:640px;max-height:92vh;overflow-y:auto}
+.user-form{display:flex;flex-direction:column;gap:2px}
+.user-form .two{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:620px){.user-form .two{grid-template-columns:1fr}}
+.user-form select{width:100%;border:1px solid #cfdae1;border-radius:9px;padding:11px 12px;font:inherit;font-size:14px;background:#fff;color:#172d4f}
+.user-form .admin-field{margin-bottom:12px}
+.user-form .admin-field input[type=text],.user-form .admin-field input[type=email],.user-form .admin-field input[type=password]{font-size:14px;padding:10px 12px}
+.password-row{display:flex;gap:8px}
+.password-row .admin-password{flex:1}
+.password-row .button{font-size:12px;padding:8px 12px}
+.permission-group{border:1px solid #e4eaee;border-radius:10px;padding:10px 12px 4px;margin:0 0 10px;min-width:0}
+.permission-group legend{font-size:12px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:#5a7283;padding:0 6px}
+.permission-item{display:flex;gap:10px;align-items:flex-start;padding:7px 2px;font-size:13px;line-height:1.45;color:#2a4257}
+.permission-item input{margin-top:3px;width:16px;height:16px;flex:none;accent-color:#197448}
+.permission-item small{display:block;color:#7a8a96;font-size:12px}
+.permission-item.locked{opacity:.65}
+.role-help{font-size:12.5px;color:#5f7686;margin:-4px 0 12px;line-height:1.5}
+.check-row{display:flex;gap:10px;align-items:flex-start;font-size:13px;margin:6px 0 14px;color:#2a4257}
+.check-row input{margin-top:3px;width:16px;height:16px;accent-color:#197448}
+.users-legacy{margin-top:4px}
+.users-legacy h3{font-size:14px;margin-bottom:4px}
+.users-legacy p{font-size:12.5px;color:#6b7f8d;margin-bottom:10px;line-height:1.55}
+.users-legacy ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+.users-legacy li{display:flex;justify-content:space-between;gap:12px;font-size:13px;border-bottom:1px solid #eef2f4;padding:6px 0}
+.users-legacy li small{color:#7b8c98}
+.created-note{background:#e8f5ee;border:1px solid #b9dcc8;color:#1f5b3d;border-radius:10px;padding:12px 15px;font-size:13px;line-height:1.6}
+.users-legacy details{margin-top:8px}
+.users-legacy summary{cursor:pointer;font-size:12.5px;color:#52687a;padding:4px 0}
+
+/* Civic watermark behind the sign-in card (same idea as the mobile app's background art). */
+.admin-login{position:relative;overflow:hidden;isolation:isolate}
+.admin-login>.admin-card{position:relative;z-index:1}
+.admin-watermark{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.admin-watermark-item{position:absolute;display:block;line-height:0}
+.admin-watermark-item svg{display:block}
+@media(max-width:900px){.admin-watermark-right{display:none}}
+@media(max-width:560px){.admin-watermark-item{opacity:.06!important}.admin-watermark-item:nth-child(n+6){display:none}}

@@ -1,0 +1,11 @@
+{
+  "expo": {
+    "name": "SAMADHAN",
+    "slug": "samadhan-citizen",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "icon": "./assets/samadhan-logo.png",
+    "userInterfaceStyle": "light",
+    "scheme": "samadhan"
+  }
+}

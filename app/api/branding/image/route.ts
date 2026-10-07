@@ -1,0 +1,4 @@
+import {env} from 'cloudflare:workers';
+import {database,apiError} from '@/lib/server';
+export const dynamic='force-dynamic';
+export async function GET(request:Request){try{const row=await database().prepare("SELECT w.owner,w.body FROM workspaces w JOIN platform_owner p ON w.owner = p.user_id WHERE p.id = 'main'").first<{owner:string;body:string}>();const id=row?JSON.parse(row.body).settings?.splashImageId:null;if(!id||new URL(request.url).searchParams.get('v')!==id||!env.BUCKET)return new Response(null,{status:404});const media=await database().prepare('SELECT content_type FROM media WHERE id = ? AND owner = ?').bind(id,row!.owner).first<{content_type:string}>();const file=media?await env.BUCKET.get(id):null;if(!file)return new Response(null,{status:404});return new Response(file.body,{headers:{'Content-Type':media!.content_type,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff'}});}catch(e){return apiError(e);}}

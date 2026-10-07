@@ -1,0 +1,17 @@
+export type ResidentProfile={id:string;name:string;mobile:string;email:string;address:string;wardId:string;photoId:string;language:'en'|'hi';classifiedNotifications:boolean;activityNotifications:boolean;notificationConsentAt:string|null;readNotificationIds:string[];registeredAt:string|null;updatedAt:string;/** Set by an administrator: a blocked resident cannot sign in or use the app. */blocked?:boolean;blockedAt?:string|null;blockedReason?:string};
+/** One registered app user as the admin portal sees them (permission residents.manage). */
+export type AdminResident={id:string;name:string;mobile:string;email:string;address:string;wardId:string;wardLabel:string;photoId:string;language:'en'|'hi';classifiedNotifications:boolean;activityNotifications:boolean;registeredAt:string|null;blocked:boolean;blockedAt:string|null;blockedReason:string;complaintCount:number};
+/** Stored ward record. memberPhotoId is a media id; never sent to clients (they get memberPhotoUrl). */
+export type Ward={id:string;number:string;name:string;nameHi:string;city:string;memberName:string;memberNameHi:string;memberPhotoId:string;active:boolean};
+export type PublicWard={id:string;number:string;name:string;nameHi:string;city:string;memberName:string;memberNameHi:string;memberPhotoUrl:string|null};
+export type UnreadCounts={complaints:number;classifieds:number;activities:number;total:number};
+export type Classified={id:string;title:string;titleHi:string;description:string;descriptionHi:string;advertiser:string;advertiserHi?:string;imageId:string;contactPhone:string;url:string;startsAt:string;endsAt:string;status:'draft'|'published'|'archived';publishedAt:string|null};
+/** Campaign / programme run by the Panchayat Samiti or Nagar Parishad. Resident-visible while published and not yet ended. */
+export type Activity={id:string;title:string;titleHi:string;description:string;descriptionHi:string;organizer:string;organizerHi:string;venue:string;venueHi:string;startsAt:string;endsAt:string;imageId:string;contactPhone:string;url:string;status:'draft'|'published'|'archived';publishedAt:string|null};
+export function visibleActivity(a:Activity,now=Date.now()){return a.status==='published'&&+new Date(a.endsAt)>now;}
+export type Place={id:string;name:string;nameHi:string;description:string;descriptionHi:string;address:string;addressHi?:string;hours:string;hoursHi?:string;imageId:string;sourceUrl:string;mapUrl:string;published:boolean;sortOrder:number};
+export type Municipality={name:string;nameHi:string;district:string;districtHi?:string;state:string;stateHi?:string;about:string;aboutHi:string;history:string;historyHi:string;sourceUrl:string;published:boolean};
+export type ResidentNotification={id:string;kind:'complaint'|'classified'|'activity';title:string;titleHi:string;body:string;bodyHi:string;classifiedId:string;activityId?:string;complaintId?:string;residentId?:string;createdAt:string;read?:boolean};
+export function defaultProfile(id='demo-resident'):ResidentProfile{return {id,name:'',mobile:'',email:'',address:'',wardId:'',photoId:'',language:'en',classifiedNotifications:true,activityNotifications:true,notificationConsentAt:null,readNotificationIds:[],registeredAt:null,updatedAt:new Date().toISOString()};}
+export function defaultMunicipality():Municipality{return {name:'',nameHi:'',district:'',state:'',about:'',aboutHi:'',history:'',historyHi:'',sourceUrl:'',published:false};}
+export function visibleClassified(ad:Classified,now=Date.now()){return ad.status==='published'&&+new Date(ad.startsAt)<=now&&+new Date(ad.endsAt)>now;}
